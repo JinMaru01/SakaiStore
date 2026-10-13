@@ -1,0 +1,74 @@
+week,day,weekday,platform,time_phnom_penh,pillar,format,game,studio_template,studio_image,idea,cta,utm_source,utm_medium,utm_campaign,utm_content
+1,1,Mon,Facebook,19:30,Community,Photo post,all,price_list,square,"Welcome post: who we are, how ordering works, follower code FOLLOW10; pin it",Follow + order link,facebook,social,price_list,all-games
+1,1,Mon,TikTok,12:00,How-to & trust,Video,mobile-legends,how_to_topup,story,Idea 2: 60-second top-up with a visible timer,Link in bio,tiktok,social,mobile-legends,how_to_topup
+1,1,Mon,Telegram,20:00,Prices & deals,Repost,all,price_list,portrait,Repost the welcome price list to the Telegram channel,Order link,telegram,social,price_list,channel_post
+1,2,Tue,Facebook,19:30,Prices & deals,Photo post,mobile-legends,price_list,square,MLBB price list (Khmer caption first),Order link with code,facebook,social,mobile-legends,price_list
+1,2,Tue,TikTok,20:00,Prices & deals,Video,mobile-legends,price_list,story,Idea 1: price check — zoom on the cheapest diamonds,Link in bio + TIKTOK5,tiktok,social,mobile-legends,price_list
+1,3,Wed,Facebook,19:30,How-to & trust,Carousel,mobile-legends,how_to_topup,,How to top up + where to find your User ID and Zone ID (blurred screenshots),Order link,facebook,social,mobile-legends,how_to_topup
+1,3,Wed,TikTok,20:00,How-to & trust,Video,all,,,Idea 6: scam warning — we never ask for passwords,Share with your squad,tiktok,social,all-games,pinned_comment
+1,3,Wed,Telegram,20:00,How-to & trust,Repost,all,,,Repost the scam-warning video,Official links,telegram,social,all-games,channel_post
+1,4,Thu,Facebook,19:30,Prices & deals,Photo post,free-fire,price_list,square,Free Fire price list,Order link with code,facebook,social,free-fire,price_list
+1,4,Thu,TikTok,20:00,Prices & deals,Video,free-fire,price_list,story,Price check — Free Fire diamonds,Link in bio,tiktok,social,free-fire,price_list
+1,5,Fri,Facebook,19:30,Gaming culture,Video / meme,mobile-legends,,,Hero tip or meme of the week + soft top-up mention,Comment your main hero,facebook,social,mobile-legends,page_post
+1,5,Fri,TikTok,20:00,Gaming culture,Video,all,,,Idea 8: which game are you?,Comment your game,tiktok,social,all-games,pinned_comment
+1,6,Sat,Facebook,10:00,Prices & deals,Photo post,pubg-mobile,price_list,portrait,PUBG Mobile UC price list,Order link with code,facebook,social,pubg-mobile,price_list
+1,6,Sat,TikTok,12:00,Prices & deals,Video,pubg-mobile,price_list,story,Idea 4: UC vs iced coffee,Link in bio,tiktok,social,pubg-mobile,price_list
+1,6,Sat,TikTok,20:00,How-to & trust,Video,mobile-legends,,,Idea 5: where is my MLBB ID?,Save this video,tiktok,social,mobile-legends,pinned_comment
+1,6,Sat,Telegram,10:00,Prices & deals,Repost,all,price_list,story,Weekend price list (all games),Order link,telegram,social,price_list,channel_post
+1,7,Sun,Facebook,10:00,Community,Poll,all,,,Poll: which game should we add next?,Vote in comments,facebook,social,all-games,page_post
+1,7,Sun,TikTok,20:00,Proof,Video,all,,,Idea 7: week-one deliveries (IDs blurred) + thank you,Link in bio,tiktok,social,all-games,pinned_comment
+2,8,Mon,Facebook,08:30,Prices & deals,Photo post,mobile-legends,new_pass,square,Monday Weekly Diamond Pass reminder,Get your pass link,facebook,social,mobile-legends,new_pass
+2,8,Mon,TikTok,12:00,Prices & deals,Video,mobile-legends,new_pass,story,Idea 3: POV — your pass expired on Monday,Link in bio,tiktok,social,mobile-legends,new_pass
+2,8,Mon,Telegram,08:30,Prices & deals,Repost,mobile-legends,new_pass,square,Weekly pass reminder,Order link,telegram,social,mobile-legends,channel_post
+2,9,Tue,Facebook,19:30,Proof,Photo post,all,,,"Delivered screenshots + one customer review (with permission, IDs blurred)",Order link,facebook,social,all-games,page_post
+2,9,Tue,TikTok,20:00,Prices & deals,Video,honor-of-kings,price_list,story,Price check — Honor of Kings tokens,Link in bio,tiktok,social,honor-of-kings,price_list
+2,10,Wed,Facebook,19:30,Prices & deals,Photo post,honor-of-kings,price_list,square,Honor of Kings price list + Weekly Card,Order link with code,facebook,social,honor-of-kings,price_list
+2,10,Wed,TikTok,20:00,Proof,Video,free-fire,,,Idea 7: delivered in 2 minutes reaction,Link in bio,tiktok,social,free-fire,pinned_comment
+2,10,Wed,Telegram,20:00,Proof,Repost,all,,,Repost the best TikTok of the week,Follow on TikTok,telegram,social,all-games,channel_post
+2,11,Thu,Facebook,19:30,How-to & trust,Text + image,all,,,Scam warning post (EN + KM) — pin it,Official links,facebook,social,all-games,page_post
+2,11,Thu,TikTok,20:00,How-to & trust,Video,free-fire,how_to_topup,,Top up Free Fire in 60 seconds,Link in bio,tiktok,social,free-fire,how_to_topup
+2,12,Fri,Facebook,19:30,Prices & deals,Photo post,magic-chess-go-go,price_list,square,Magic Chess: Go Go price list,Order link with code,facebook,social,magic-chess-go-go,price_list
+2,12,Fri,TikTok,20:00,Gaming culture,Video,mobile-legends,,,Patch / meta tip of the week,Follow for more,tiktok,social,mobile-legends,pinned_comment
+2,13,Sat,Facebook,10:00,Prices & deals,Photo post,free-fire,new_pass,portrait,Free Fire weekly + monthly membership,Get your membership link,facebook,social,free-fire,new_pass
+2,13,Sat,TikTok,12:00,Prices & deals,Video,mobile-legends,price_list,story,Idea 4: 86 diamonds vs iced coffee,Link in bio,tiktok,social,mobile-legends,price_list
+2,13,Sat,TikTok,20:00,Community,Video replies,all,,,Reply with videos to price questions in comments,Comment your game,tiktok,social,all-games,pinned_comment
+2,13,Sat,Telegram,10:00,Prices & deals,Repost,all,price_list,story,Weekend price list (all games),Order link,telegram,social,price_list,channel_post
+2,14,Sun,Facebook,10:00,Gaming culture,Video / photo,all,,,Esports weekend (MPL KH / FFWS) results + top-up link,Order link,facebook,social,all-games,page_post
+2,14,Sun,TikTok,20:00,Proof,Video,all,,,Customer review compilation (with permission),Link in bio,tiktok,social,all-games,pinned_comment
+3,15,Mon,Facebook,08:30,Prices & deals,Photo post,mobile-legends,new_pass,square,Monday Weekly Diamond Pass reminder,Get your pass link,facebook,social,mobile-legends,new_pass
+3,15,Mon,TikTok,12:00,Prices & deals,Video,mobile-legends,new_pass,story,Monday pass renewal (new hook),Link in bio,tiktok,social,mobile-legends,new_pass
+3,15,Mon,Telegram,08:30,Prices & deals,Repost,mobile-legends,new_pass,square,Weekly pass reminder,Order link,telegram,social,mobile-legends,channel_post
+3,16,Tue,Facebook,19:30,Prices & deals,Photo post,genshin-impact,price_list,square,Genshin Impact: Welkin Moon & Genesis Crystals,Order link with code,facebook,social,genshin-impact,price_list
+3,16,Tue,TikTok,20:00,How-to & trust,Video,genshin-impact,how_to_topup,,Where is your Genshin UID + server?,Link in bio,tiktok,social,genshin-impact,how_to_topup
+3,17,Wed,Facebook,19:30,Prices & deals,Photo post,call-of-duty-mobile,price_list,square,COD Mobile CP prices,Order link with code,facebook,social,call-of-duty-mobile,price_list
+3,17,Wed,TikTok,20:00,Gaming culture,Video,pubg-mobile,,,Best loadout / tip of the week,Follow for more,tiktok,social,pubg-mobile,pinned_comment
+3,17,Wed,Telegram,20:00,Gaming culture,Repost,all,,,Repost the best TikTok of the week,Follow on TikTok,telegram,social,all-games,channel_post
+3,18,Thu,Facebook,19:30,Prices & deals,Story + photo,all,flash_sale,story,Teaser: flash sale this weekend (set real compare-at prices first),Turn on notifications,facebook,social,flash_sale,all-games
+3,18,Thu,TikTok,20:00,Prices & deals,Video,all,flash_sale,story,Countdown teaser for the weekend sale,Follow so you don't miss it,tiktok,social,flash_sale,all-games
+3,19,Fri,Facebook,19:30,Prices & deals,Photo post,mobile-legends,flash_sale,square,FLASH SALE starts — MLBB (ends Sunday 21:00),Order link with code,facebook,social,mobile-legends,flash_sale
+3,19,Fri,TikTok,20:00,Prices & deals,Video,mobile-legends,flash_sale,story,Idea 9: flash sale countdown,Link in bio,tiktok,social,mobile-legends,flash_sale
+3,20,Sat,Facebook,10:00,Prices & deals,Photo post,free-fire,flash_sale,portrait,Flash sale — Free Fire,Order link with code,facebook,social,free-fire,flash_sale
+3,20,Sat,TikTok,12:00,Prices & deals,Video,free-fire,flash_sale,story,Before / after prices,Link in bio,tiktok,social,free-fire,flash_sale
+3,20,Sat,TikTok,20:00,Proof,Video,all,,,Orders coming in (screens blurred),Link in bio,tiktok,social,all-games,pinned_comment
+3,20,Sat,Telegram,10:00,Prices & deals,Repost,all,flash_sale,story,Flash sale reminder,Order link,telegram,social,flash_sale,channel_post
+3,21,Sun,Facebook,17:00,Prices & deals,Photo post,all,flash_sale,square,Last hours: flash sale ends 21:00,Order link,facebook,social,flash_sale,all-games
+3,21,Sun,TikTok,18:00,Prices & deals,Video,all,flash_sale,story,Ends tonight — last call,Link in bio,tiktok,social,flash_sale,all-games
+4,22,Mon,Facebook,19:30,Community,Photo post,mobile-legends,giveaway,square,"GIVEAWAY: 3 Weekly Diamond Passes (rules from the studio, ends Sunday 20:00)",Comment to enter,facebook,social,mobile-legends,giveaway
+4,22,Mon,TikTok,20:00,Community,Video,mobile-legends,giveaway,story,Idea 10: giveaway announcement,Comment to enter,tiktok,social,mobile-legends,giveaway
+4,22,Mon,Telegram,20:00,Community,Repost,mobile-legends,giveaway,square,Giveaway announcement with link to the Facebook post,Enter on Facebook,telegram,social,mobile-legends,channel_post
+4,23,Tue,Facebook,19:30,Prices & deals,Photo post,blood-strike,price_list,square,Blood Strike Gold + Strike Pass prices,Order link with code,facebook,social,blood-strike,price_list
+4,23,Tue,TikTok,20:00,How-to & trust,Video,mobile-legends,how_to_topup,,Repeat your best how-to video with a new hook,Link in bio,tiktok,social,mobile-legends,how_to_topup
+4,24,Wed,Facebook,19:30,Gaming culture,Video / meme,all,,,Gaming meme or tip,Comment,facebook,social,all-games,page_post
+4,24,Wed,TikTok,20:00,Prices & deals,Video,honor-of-kings,price_list,story,Price check — Honor of Kings,Link in bio,tiktok,social,honor-of-kings,price_list
+4,24,Wed,Telegram,20:00,Gaming culture,Repost,all,,,Repost the best TikTok of the week,Follow on TikTok,telegram,social,all-games,channel_post
+4,25,Thu,Facebook,19:30,How-to & trust,Carousel,all,how_to_topup,,"FAQ: paying with ABA, ACLEDA, Wing KHQR",Order link,facebook,social,how_to_topup,all-games
+4,25,Thu,TikTok,20:00,Community,Video,mobile-legends,giveaway,,Giveaway reminder: comment to enter,Comment to enter,tiktok,social,mobile-legends,giveaway
+4,26,Fri,Facebook,19:30,Prices & deals,Photo post,all,price_list,portrait,All-games price list,Order link,facebook,social,price_list,all-games
+4,26,Fri,TikTok,20:00,Gaming culture,Video,all,,,Which game are you? part 2,Comment your game,tiktok,social,all-games,pinned_comment
+4,27,Sat,Facebook,10:00,Community,Photo post,mobile-legends,giveaway,,Giveaway last call (ends Sunday 20:00),Comment to enter,facebook,social,mobile-legends,giveaway
+4,27,Sat,TikTok,12:00,Prices & deals,Video,mobile-legends,price_list,story,"Best-performing price check, new hook",Link in bio,tiktok,social,mobile-legends,price_list
+4,27,Sat,TikTok,20:00,Proof,Video,all,,,Week deliveries compilation,Link in bio,tiktok,social,all-games,pinned_comment
+4,27,Sat,Telegram,10:00,Prices & deals,Repost,all,price_list,story,Weekend price list (all games),Order link,telegram,social,price_list,channel_post
+4,28,Sun,Facebook,10:00,Community,Photo post,all,,,Month recap + thank you + poll for next month,Vote in comments,facebook,social,all-games,page_post
+4,28,Sun,Facebook,21:00,Community,Video / photo,mobile-legends,,,Giveaway winners (record the random draw; message winners from the Page),Follow for the next one,facebook,social,mobile-legends,page_post
+4,28,Sun,TikTok,21:00,Community,Video,mobile-legends,,,Winners video (screen-record the comment picker),Follow for the next one,tiktok,social,mobile-legends,pinned_comment

@@ -1,7 +1,8 @@
 /**
- * Marketing attribution. On the first landing of a visit we store where the
- * visitor came from in the `sk_attr` cookie (first-touch, 30 days, see
- * src/components/marketing/attribution-capture.tsx). Order creation copies it
+ * Marketing attribution. When a visit lands from a marketing touch (UTM link,
+ * ad click id or external referrer) we store where the visitor came from in
+ * the `sk_attr` cookie — last non-direct touch wins, 30 days; see
+ * src/lib/tracking/attribution-cookie.ts. Order creation copies it
  * onto the order so the admin can see which channel (Facebook, TikTok, ...)
  * actually sells.
  *
@@ -23,7 +24,7 @@ export type Attribution = {
   clickId?: string;
   referrer?: string;
   landingPath?: string;
-  /** epoch ms of first touch */
+  /** epoch ms of the touch */
   ts?: number;
 };
 
