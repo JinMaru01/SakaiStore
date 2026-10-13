@@ -267,7 +267,9 @@ export const SEED_GAMES: SeedGame[] = [
 export const SEED_PROMOS: Omit<schema.NewPromoCode, "id" | "createdAt" | "updatedAt">[] = [
   {
     code: "WELCOME5",
-    description: "5% off your first top-up (max $1)",
+    description: "5% off your first top-up of each game (max $1)",
+    descriptionKm: "បញ្ចុះ 5% សម្រាប់ការបញ្ចូលលើកដំបូងនៃហ្គេមនីមួយៗ (អតិបរមា $1)",
+    firstOrderOnly: true,
     type: "percent",
     value: 5,
     maxDiscountCents: 100,
@@ -276,6 +278,7 @@ export const SEED_PROMOS: Omit<schema.NewPromoCode, "id" | "createdAt" | "update
   {
     code: "FB5",
     description: "5% off for our Facebook fans (max $2)",
+    descriptionKm: "បញ្ចុះ 5% សម្រាប់អ្នកគាំទ្រ Facebook របស់យើង (អតិបរមា $2)",
     type: "percent",
     value: 5,
     maxDiscountCents: 200,
@@ -284,6 +287,7 @@ export const SEED_PROMOS: Omit<schema.NewPromoCode, "id" | "createdAt" | "update
   {
     code: "TIKTOK5",
     description: "5% off for TikTok followers (max $2)",
+    descriptionKm: "បញ្ចុះ 5% សម្រាប់អ្នកតាមដាន TikTok (អតិបរមា $2)",
     type: "percent",
     value: 5,
     maxDiscountCents: 200,
@@ -291,12 +295,15 @@ export const SEED_PROMOS: Omit<schema.NewPromoCode, "id" | "createdAt" | "update
   },
   {
     code: "FOLLOW10",
-    description: "10% off orders over $5 for followers (max $2)",
+    description: "10% off orders from $5 for followers (max $2)",
+    descriptionKm: "បញ្ចុះ 10% សម្រាប់ការបញ្ជាទិញចាប់ពី $5 សម្រាប់អ្នកតាមដាន (អតិបរមា $2)",
     type: "percent",
     value: 10,
     minOrderCents: 500,
     maxDiscountCents: 200,
-    channel: "facebook",
+    // General follower reward: the site shows it to every visitor, so it must not
+    // claim orders for one channel (FB5 / TIKTOK5 are the per-channel codes).
+    channel: null,
   },
 ];
 

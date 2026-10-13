@@ -32,6 +32,7 @@ function order(overrides: Partial<Order> = {}): Order {
     paymentRef: null,
     paymentPayload: { secret: "raw bakong payload" },
     lastPaymentCheckAt: null,
+    paymentFinalCheckedAt: null,
     paidAt: null,
     deliveredAt: null,
     contactPhone: "012345678",

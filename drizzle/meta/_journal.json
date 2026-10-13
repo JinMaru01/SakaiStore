@@ -15,6 +15,13 @@
       "when": 1791908235055,
       "tag": "0001_orders_tg_chat_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791913341950,
+      "tag": "0002_km_text_promo_rules_final_check",
+      "breakpoints": true
     }
   ]
 }

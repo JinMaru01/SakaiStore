@@ -39,7 +39,10 @@ export const games = pgTable(
     publisher: varchar("publisher", { length: 120 }),
     /** One-liner shown on cards. */
     tagline: text("tagline"),
+    /** Khmer tagline; the storefront falls back to `tagline` when empty. */
+    taglineKm: text("tagline_km"),
     description: text("description"),
+    descriptionKm: text("description_km"),
     /** What the in-game currency is called: Diamonds, UC, CP, Tokens... */
     currencyName: varchar("currency_name", { length: 40 }).notNull().default("Diamonds"),
     /** Optional cover/logo image URL. When null the UI renders a generated tile. */
@@ -52,6 +55,8 @@ export const games = pgTable(
     idPattern: varchar("id_pattern", { length: 160 }),
     /** Help text: where to find the id in-game. */
     idHelp: text("id_help"),
+    /** Khmer version of idHelp (falls back to idHelp). */
+    idHelpKm: text("id_help_km"),
     /** MLBB-style games need a second "Zone ID"/"Server" value. */
     requiresZone: boolean("requires_zone").notNull().default(false),
     zoneLabel: varchar("zone_label", { length: 40 }),
@@ -103,15 +108,23 @@ export const promoCodes = pgTable("promo_codes", {
   /** Always stored UPPERCASE. */
   code: varchar("code", { length: 32 }).notNull().unique(),
   description: text("description"),
+  /** Khmer description shown to customers in km mode (falls back to description). */
+  descriptionKm: text("description_km"),
   type: promoTypeEnum("type").notNull(),
   /** percent: 1-100. fixed: USD cents. */
   value: integer("value").notNull(),
   /** Cap for percent discounts, in cents. */
   maxDiscountCents: integer("max_discount_cents"),
   minOrderCents: integer("min_order_cents").notNull().default(0),
-  /** null = unlimited. usedCount is incremented when an order using it is PAID. */
+  /**
+   * null = unlimited. usedCount is incremented when an order using it is PAID;
+   * unexpired pending orders also hold a use while they await payment, so the
+   * cap cannot be exceeded by opening many orders at once.
+   */
   maxUses: integer("max_uses"),
   usedCount: integer("used_count").notNull().default(0),
+  /** Only valid for a player's first paid order of the game (same player id + zone). */
+  firstOrderOnly: boolean("first_order_only").notNull().default(false),
   /** Restrict to one game (null = all games). */
   gameId: integer("game_id").references(() => games.id, { onDelete: "set null" }),
   /** Marketing channel this code is promoted on: facebook | tiktok | telegram | other. */
@@ -164,6 +177,13 @@ export const orders = pgTable(
     /** Raw payment confirmation payload (for audits). */
     paymentPayload: jsonb("payment_payload"),
     lastPaymentCheckAt: timestamp("last_payment_check_at", { withTimezone: true }),
+    /**
+     * Set when a payment check at/after paymentExpiresAt returned a definitive
+     * answer (paid or unpaid). Null on an expired/cancelled order means the final
+     * check never succeeded (e.g. Bakong token outage), so reconcile keeps
+     * re-checking it beyond the normal late-payment window.
+     */
+    paymentFinalCheckedAt: timestamp("payment_final_checked_at", { withTimezone: true }),
     paidAt: timestamp("paid_at", { withTimezone: true }),
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
 
@@ -201,6 +221,8 @@ export const orders = pgTable(
     index("orders_channel_idx").on(t.channel),
     // Telegram `/status` (no code) lists the orders linked to the chat.
     index("orders_tg_chat_idx").on(t.customerTelegramChatId),
+    // Promo-use reservations count pending orders per code.
+    index("orders_promo_status_idx").on(t.promoCodeId, t.status),
   ],
 );
 

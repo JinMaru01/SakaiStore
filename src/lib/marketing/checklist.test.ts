@@ -8,6 +8,8 @@ const promo = (over: Partial<PromoCode>): PromoCode => ({
   id: 1,
   code: "FOLLOW10",
   description: null,
+  descriptionKm: null,
+  firstOrderOnly: false,
   type: "percent",
   value: 10,
   maxDiscountCents: 200,

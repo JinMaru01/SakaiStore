@@ -23,8 +23,8 @@ const localized = z.object({ en: z.string().max(500).default(""), km: z.string()
 export const storeSettingsSchema = z.object({
   name: z.string().trim().min(1).max(60).default("Sakai Store"),
   tagline: localized.default({
-    en: "Fast & cheap game top-up in Cambodia",
-    km: "បញ្ចូលហ្គេមលឿន និងថោកបំផុតនៅកម្ពុជា",
+    en: "Fast, fairly priced game top-up in Cambodia",
+    km: "បញ្ចូលហ្គេមរហ័ស តម្លៃសមរម្យ នៅកម្ពុជា",
   }),
   /** Site-wide announcement bar; empty = hidden. */
   announcement: localized.default({ en: "", km: "" }),

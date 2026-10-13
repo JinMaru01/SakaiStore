@@ -67,6 +67,8 @@ describe("promo helpers", () => {
     id: 1,
     code: "FB5",
     description: null,
+    descriptionKm: null,
+    firstOrderOnly: false,
     type: "percent",
     value: 5,
     maxDiscountCents: 200,

@@ -9,6 +9,8 @@ function promo(overrides: Partial<PromoCode> = {}): PromoCode {
     id: 1,
     code: "TEST",
     description: null,
+    descriptionKm: null,
+    firstOrderOnly: false,
     type: "percent",
     value: 10,
     maxDiscountCents: null,

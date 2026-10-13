@@ -51,6 +51,7 @@ function order(over: Partial<Order> = {}): Order {
     paymentRef: null,
     paymentPayload: null,
     lastPaymentCheckAt: null,
+    paymentFinalCheckedAt: null,
     paidAt: new Date("2026-10-13T07:05:00Z"), // 14:05 in Phnom Penh
     deliveredAt: null,
     contactPhone: null,
