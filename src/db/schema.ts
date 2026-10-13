@@ -12,16 +12,11 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const ORDER_STATUSES = [
-  "pending_payment",
-  "paid",
-  "processing",
-  "delivered",
-  "failed",
-  "refunded",
-  "expired",
-  "cancelled",
-] as const;
+// Relative import (not "@/…") so drizzle-kit and tsx scripts resolve it without path aliases.
+import { ORDER_STATUSES, type OrderStatus } from "../lib/orders/statuses";
+
+export { ORDER_STATUSES };
+export type { OrderStatus };
 
 export const orderStatusEnum = pgEnum("order_status", ORDER_STATUSES);
 export const promoTypeEnum = pgEnum("promo_type", ["percent", "fixed"]);
@@ -204,6 +199,8 @@ export const orders = pgTable(
     index("orders_created_idx").on(t.createdAt),
     index("orders_md5_idx").on(t.khqrMd5),
     index("orders_channel_idx").on(t.channel),
+    // Telegram `/status` (no code) lists the orders linked to the chat.
+    index("orders_tg_chat_idx").on(t.customerTelegramChatId),
   ],
 );
 
@@ -242,4 +239,3 @@ export type NewPromoCode = typeof promoCodes.$inferInsert;
 export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
 export type OrderEvent = typeof orderEvents.$inferSelect;
-export type OrderStatus = (typeof ORDER_STATUSES)[number];

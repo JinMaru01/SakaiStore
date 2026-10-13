@@ -8,6 +8,13 @@
       "when": 1791900035510,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791908235055,
+      "tag": "0001_orders_tg_chat_idx",
+      "breakpoints": true
     }
   ]
 }

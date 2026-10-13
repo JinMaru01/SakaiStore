@@ -1,6 +1,7 @@
-import type { OrderStatus } from "@/db/schema";
-export { ORDER_STATUSES } from "@/db/schema";
-export type { OrderStatus } from "@/db/schema";
+// From the dependency-free list (not @/db/schema) so client bundles stay free of drizzle.
+import type { OrderStatus } from "./statuses";
+export { ORDER_STATUSES } from "./statuses";
+export type { OrderStatus } from "./statuses";
 
 /**
  * Allowed order status transitions (from -> to). Every status change MUST go
