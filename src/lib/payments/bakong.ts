@@ -17,6 +17,21 @@ import { env } from "@/lib/env";
 
 export const BAKONG_TIMEOUT_MS = 8_000;
 
+/**
+ * Why a check failed. Everything except `invalid_md5` means Bakong itself
+ * could not answer (it says nothing about the order); `auth` and
+ * `not_configured` will not fix themselves (renew/set BAKONG_API_TOKEN).
+ */
+export type BakongErrorCode =
+  | "not_configured"
+  | "auth"
+  | "timeout"
+  | "network"
+  | "http"
+  | "bad_response"
+  | "api_error"
+  | "invalid_md5";
+
 export type BakongCheckResult =
   | {
       status: "paid";
@@ -29,7 +44,7 @@ export type BakongCheckResult =
       raw: unknown;
     }
   | { status: "unpaid" }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string; code: BakongErrorCode };
 
 type BakongResponse = {
   responseCode?: number;
@@ -48,8 +63,8 @@ export async function checkTransactionByMd5(
   opts: { timeoutMs?: number } = {},
 ): Promise<BakongCheckResult> {
   const { BAKONG_API_BASE, BAKONG_API_TOKEN } = env();
-  if (!BAKONG_API_TOKEN) return { status: "error", message: "BAKONG_API_TOKEN is not set" };
-  if (!/^[a-f0-9]{32}$/i.test(md5)) return { status: "error", message: "Invalid KHQR md5" };
+  if (!BAKONG_API_TOKEN) return { status: "error", message: "BAKONG_API_TOKEN is not set", code: "not_configured" };
+  if (!/^[a-f0-9]{32}$/i.test(md5)) return { status: "error", message: "Invalid KHQR md5", code: "invalid_md5" };
 
   let res: Response;
   try {
@@ -66,11 +81,12 @@ export async function checkTransactionByMd5(
   } catch (err) {
     const name = err instanceof Error ? err.name : "";
     if (name === "TimeoutError" || name === "AbortError") {
-      return { status: "error", message: "Bakong API timed out" };
+      return { status: "error", message: "Bakong API timed out", code: "timeout" };
     }
     return {
       status: "error",
       message: `Bakong API request failed: ${err instanceof Error ? err.message : String(err)}`,
+      code: "network",
     };
   }
 
@@ -78,25 +94,26 @@ export async function checkTransactionByMd5(
     return {
       status: "error",
       message: `Bakong API token rejected (HTTP ${res.status}); renew BAKONG_API_TOKEN at api-bakong.nbc.gov.kh`,
+      code: "auth",
     };
   }
-  if (!res.ok) return { status: "error", message: `Bakong API HTTP ${res.status}` };
+  if (!res.ok) return { status: "error", message: `Bakong API HTTP ${res.status}`, code: "http" };
 
   let body: BakongResponse;
   try {
     body = (await res.json()) as BakongResponse;
   } catch {
-    return { status: "error", message: "Bakong API returned invalid JSON" };
+    return { status: "error", message: "Bakong API returned invalid JSON", code: "bad_response" };
   }
   if (!body || typeof body !== "object") {
-    return { status: "error", message: "Bakong API returned an unexpected body" };
+    return { status: "error", message: "Bakong API returned an unexpected body", code: "bad_response" };
   }
 
   if (body.responseCode === 0 && body.data && typeof body.data === "object") {
     const amount = Number(body.data.amount);
     const currency = str(body.data.currency);
     if (!Number.isFinite(amount) || !currency) {
-      return { status: "error", message: "Bakong transaction is missing amount/currency" };
+      return { status: "error", message: "Bakong transaction is missing amount/currency", code: "bad_response" };
     }
     return {
       status: "paid",
@@ -115,5 +132,6 @@ export async function checkTransactionByMd5(
     message: `Bakong API error${body.errorCode != null ? ` ${body.errorCode}` : ""}: ${
       body.responseMessage ?? "unknown"
     }`,
+    code: "api_error",
   };
 }

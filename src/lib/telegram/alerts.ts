@@ -2,7 +2,7 @@ import "server-only";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { orderEvents, type Order, type OrderEvent, type OrderStatus } from "@/db/schema";
+import { ORDER_STATUSES, orderEvents, type Order, type OrderEvent, type OrderStatus } from "@/db/schema";
 import { siteUrl } from "@/lib/env";
 import { adminChatIds, editMessageText, isTelegramConfigured, sendMessage } from "./api";
 import { buildAdminOrderCard, type AdminCardKind } from "./format";
@@ -33,6 +33,8 @@ const alertDataSchema = z.object({
     messages: z.array(z.object({ chatId: z.string(), messageId: z.number().int() })),
   }),
 });
+
+const paidEventDataSchema = z.object({ previous: z.enum(ORDER_STATUSES) });
 
 type EventRow = Pick<OrderEvent, "type" | "actor" | "message" | "data" | "createdAt">;
 
@@ -75,13 +77,30 @@ export function findRef(refs: CardRef[], chatId: string, messageId: number): Car
 }
 
 /**
- * Send an order alert with ✅/❌ buttons to every admin chat and remember
- * where it landed. Returns the delivered copies. Never throws.
+ * The status the order was paid from (pending_payment, or expired/cancelled
+ * for a late payment), as recorded by markOrderPaid on the "paid" event.
+ * Undefined when the order is unpaid or the event predates that field.
  */
-export async function sendAdminOrderAlert(order: Order, kind: AlertKind, reason?: string | null): Promise<CardRef[]> {
+export function paidFromEvents(events: EventRow[]): OrderStatus | undefined {
+  const paid = latestStatusEvent(events, "paid");
+  const parsed = paidEventDataSchema.safeParse(paid?.data);
+  return parsed.success ? parsed.data.previous : undefined;
+}
+
+/**
+ * Send an order alert with ✅/❌ buttons to every admin chat and remember
+ * where it landed. `paidFrom` (paid alerts) adds the late-payment warning.
+ * Returns the delivered copies. Never throws.
+ */
+export async function sendAdminOrderAlert(
+  order: Order,
+  kind: AlertKind,
+  reason?: string | null,
+  opts: { paidFrom?: OrderStatus | null } = {},
+): Promise<CardRef[]> {
   const chats = adminChatIds();
   if (!isTelegramConfigured() || chats.length === 0) return [];
-  const card = buildAdminOrderCard(order, { kind, reason, siteUrl: siteUrl(), actions: true });
+  const card = buildAdminOrderCard(order, { kind, reason, siteUrl: siteUrl(), actions: true, paidFrom: opts.paidFrom });
   const results = await Promise.all(
     chats.map(async (chatId) => ({ chatId, res: await sendMessage(chatId, card.text, { replyMarkup: card.replyMarkup }) })),
   );
@@ -107,7 +126,8 @@ export async function sendAdminOrderAlert(order: Order, kind: AlertKind, reason?
 /**
  * Re-render every recorded alert copy (plus `extra`, e.g. the /order card an
  * admin tapped) with the order's current state and `footer`. `actions`
- * decides whether ✅/❌ stay. Never throws.
+ * decides whether ✅/❌ stay. Pass `events` when already loaded (refs and the
+ * late-payment warning come from them). Never throws.
  */
 export async function syncAdminAlerts(
   order: Order,
@@ -115,11 +135,14 @@ export async function syncAdminAlerts(
     footer: string | null;
     actions: boolean;
     refs?: CardRef[];
+    events?: EventRow[];
     extra?: { chatId: string; messageId: number } | null;
   },
 ): Promise<void> {
   try {
-    const refs = opts.refs ?? alertRefsFrom(await loadOrderEvents(order.id));
+    const events = opts.events ?? (await loadOrderEvents(order.id));
+    const refs = opts.refs ?? alertRefsFrom(events);
+    const paidFrom = paidFromEvents(events);
     const targets = [...refs];
     if (opts.extra && !findRef(refs, opts.extra.chatId, opts.extra.messageId)) {
       targets.push({ ...opts.extra, kind: "details", reason: null });
@@ -133,6 +156,7 @@ export async function syncAdminAlerts(
           siteUrl: site,
           actions: opts.actions,
           footer: opts.footer,
+          paidFrom,
         });
         return editMessageText(t.chatId, t.messageId, card.text, { replyMarkup: card.replyMarkup ?? null });
       }),

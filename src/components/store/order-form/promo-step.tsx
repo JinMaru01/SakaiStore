@@ -4,23 +4,26 @@ import { BadgePercent, CircleAlert, CircleCheck, X } from "lucide-react";
 import { Button, Input, Label } from "@/components/ui";
 import { useT } from "@/i18n/client";
 import { formatUsd } from "@/lib/utils";
-import { errorMessage } from "../api";
+import { followTermsText, promoErrorText } from "./promo-text";
 import { Step } from "./step";
-import type { PromoState } from "./types";
+import type { FollowTerms, PromoState } from "./types";
 
 type Props = {
   value: string;
   state: PromoState;
   followCode: string;
+  /** Conditions of the follower code (min order, first top-up only), shown with its button. */
+  followTerms?: FollowTerms | null;
   onChange: (v: string) => void;
   onApply: () => void;
   onRemove: () => void;
   onUseFollowCode: () => void;
 };
 
-export function PromoStep({ value, state, followCode, onChange, onApply, onRemove, onUseFollowCode }: Props) {
+export function PromoStep({ value, state, followCode, followTerms, onChange, onApply, onRemove, onUseFollowCode }: Props) {
   const t = useT();
   const applied = state.status === "applied" ? state : null;
+  const followConditions = followTermsText(t, followTerms);
 
   return (
     <Step n={3} id="step-promo" title={t("game.steps.promo")} optional={t("game.optional")}>
@@ -31,7 +34,8 @@ export function PromoStep({ value, state, followCode, onChange, onApply, onRemov
             <p className="font-semibold">
               {t("game.promo.applied", { code: applied.code, amount: formatUsd(applied.discountCents) })}
             </p>
-            {applied.description && <p className="truncate text-muted">{applied.description}</p>}
+            {/* Conditions (minimum, cap) must stay readable on 360px phones: wrap, never truncate. */}
+            {applied.description && <p className="break-words text-muted">{applied.description}</p>}
           </div>
           <button
             type="button"
@@ -87,7 +91,7 @@ export function PromoStep({ value, state, followCode, onChange, onApply, onRemov
         {state.status === "error" && (
           <p className="mt-2 flex items-center gap-1.5 text-sm text-danger">
             <CircleAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {errorMessage(t, "game.promoErrors", state.error)}
+            {promoErrorText(t, state)}
           </p>
         )}
       </div>
@@ -99,7 +103,10 @@ export function PromoStep({ value, state, followCode, onChange, onApply, onRemov
           className="mt-3 flex w-full items-center gap-2 rounded-xl border border-dashed border-primary/50 bg-primary/5 px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/10"
         >
           <BadgePercent className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-          <span className="flex-1 text-muted">{t("game.promo.followHint")}</span>
+          <span className="flex-1 text-muted">
+            {t("game.promo.followHint")}
+            {followConditions && <span className="mt-0.5 block text-xs text-muted">{followConditions}</span>}
+          </span>
           <span className="rounded-md bg-bg/60 px-2 py-0.5 font-display font-bold tracking-wider text-accent">
             {followCode}
           </span>

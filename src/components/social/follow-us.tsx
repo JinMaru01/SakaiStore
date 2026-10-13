@@ -1,9 +1,11 @@
 import { BadgePercent } from "lucide-react";
 import { FacebookIcon, TelegramIcon, TikTokIcon } from "@/components/icons/brand";
 import { CopyButton } from "@/components/store/copy-button";
+import { followTermsText } from "@/components/store/order-form/promo-text";
 import { getT } from "@/i18n/server";
 import type { MarketingSettings, SocialSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
+import { getFollowPromo } from "./follow-promo";
 import { socialLinks, type SocialNetwork } from "./social-config";
 
 const BUTTONS: Record<
@@ -40,13 +42,16 @@ type Props = {
 
 /**
  * "Follow us on Facebook & TikTok" call to action with the follower promo
- * code. Grows the page audience at the moments customers are happiest.
- * Renders nothing when no social links and no code are configured.
+ * code and its conditions (e.g. "For orders from $5.00"). Grows the page
+ * audience at the moments customers are happiest. The code is only shown
+ * while it can actually be used; renders nothing when there are no social
+ * links and no usable code.
  */
 export async function FollowUs({ social, marketing, variant = "section", className, id = "follow-us" }: Props) {
-  const { t } = await getT();
+  const [{ t }, promo] = await Promise.all([getT(), getFollowPromo(marketing.followPromoCode)]);
   const links = socialLinks(social, ["facebook", "tiktok", "telegram"]);
-  const code = marketing.followPromoCode.trim().toUpperCase();
+  const code = promo?.code ?? "";
+  const conditions = promo ? followTermsText(t, promo.terms) : null;
   if (links.length === 0 && !code) return null;
   const compact = variant === "card";
 
@@ -120,6 +125,7 @@ export async function FollowUs({ social, marketing, variant = "section", classNa
               <code className="rounded-md bg-bg/60 px-2 py-0.5 font-display font-bold tracking-wider text-accent">
                 {code}
               </code>
+              {conditions && <span className="mt-1 block text-xs text-muted sm:text-sm">{conditions}</span>}
             </p>
             <CopyButton
               value={code}

@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn, formatUsd } from "@/lib/utils";
-import { gameInitials, isRenderableImageUrl, safeHex, shade, withAlpha } from "./game-art";
+import { gameInitials, isLocalImageUrl, isRenderableImageUrl, safeHex, shade, withAlpha } from "./game-art";
 
 /** The subset of a game the tiles need (keeps client payloads small). */
 export type TileGame = {
@@ -31,6 +31,11 @@ type ArtProps = {
  * generated tile (accent gradient + monogram + currency name + subtle
  * pattern), because official game logos are trademarks we must not hotlink.
  * Decorative: the game name is always rendered as text next to it.
+ *
+ * Admin-supplied remote art (any https host) is loaded by the browser directly
+ * (`unoptimized`), so the image optimizer never fetches third-party URLs and
+ * next.config needs no wildcard `images.remotePatterns` (an open image proxy).
+ * Local /public images stay optimized.
  */
 export function GameArt({ game, className, sizes = "(min-width: 1024px) 220px, 40vw", priority, hideCurrency }: ArtProps) {
   const base = "@container relative aspect-square overflow-hidden rounded-2xl";
@@ -43,6 +48,7 @@ export function GameArt({ game, className, sizes = "(min-width: 1024px) 220px, 4
           fill
           sizes={sizes}
           priority={priority}
+          unoptimized={!isLocalImageUrl(game.imageUrl)}
           className="object-cover"
         />
       </div>

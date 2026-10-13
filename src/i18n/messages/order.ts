@@ -62,7 +62,7 @@ const messages = {
     processing: {
       title: "Delivering your top-up",
       body: "{package} is on its way to {player}.",
-      eta: "Most orders arrive within 1–5 minutes. You can close this page — your order keeps going and you can track it any time.",
+      eta: "Usually delivered within minutes; late at night it can take longer. You can close this page — your order keeps going and you can track it any time.",
     },
     delivered: {
       title: "Top-up delivered!",
@@ -81,13 +81,20 @@ const messages = {
     },
     expired: {
       title: "Payment time ran out",
-      body: "This QR code expired before we received a payment. If you already paid, don't worry — contact us with your order code {code} and we'll sort it out.",
+      body: "This QR code expired before we received a payment. If you already paid, don't pay again — this page keeps checking for a while and updates by itself. If it doesn't, contact us with your order code {code} and we'll sort it out.",
     },
     cancelled: {
       title: "No payment was taken",
       body: "This order was cancelled before it was paid. You can place a new order any time.",
     },
     closed: { again: "Order again" },
+    notFound: {
+      metaTitle: "Order not found",
+      title: "We couldn't find this order",
+      body: "There is no order with the code {code}. Please check it and try again — order codes start with SK and have 10 characters, e.g. SK7F3K9Q2M.",
+      bodyNoCode: "Please check your order code and try again — order codes start with SK and have 10 characters, e.g. SK7F3K9Q2M.",
+      help: "Still can't find it? Contact us with your player ID and your payment receipt — we'll find your order.",
+    },
     details: {
       title: "Order details",
       code: "Order code",
@@ -184,7 +191,7 @@ const messages = {
     processing: {
       title: "កំពុងបញ្ចូលជូនអ្នក",
       body: "{package} កំពុងបញ្ចូលទៅកាន់ {player}។",
-      eta: "ការបញ្ជាទិញភាគច្រើនបញ្ចូលរួចក្នុងរយៈពេល 1–5 នាទី។ អ្នកអាចបិទទំព័រនេះបាន — ការបញ្ជាទិញរបស់អ្នកនៅតែបន្ត ហើយអ្នកអាចតាមដានវាបានគ្រប់ពេល។",
+      eta: "ជាធម្មតាបញ្ចូលរួចក្នុងរយៈពេលប៉ុន្មាននាទី ប៉ុន្តែពេលយប់ជ្រៅអាចយូរជាងនេះ។ អ្នកអាចបិទទំព័រនេះបាន — ការបញ្ជាទិញរបស់អ្នកនៅតែបន្ត ហើយអ្នកអាចតាមដានវាបានគ្រប់ពេល។",
     },
     delivered: {
       title: "បញ្ចូលរួចរាល់!",
@@ -203,13 +210,20 @@ const messages = {
     },
     expired: {
       title: "ផុតពេលបង់ប្រាក់",
-      body: "កូដ QR នេះបានផុតកំណត់ មុនពេលយើងទទួលបានការបង់ប្រាក់។ ប្រសិនបើអ្នកបានបង់រួចហើយ កុំបារម្ភ — សូមទាក់ទងយើងជាមួយលេខកូដការបញ្ជាទិញ {code} យើងនឹងដោះស្រាយជូន។",
+      body: "កូដ QR នេះបានផុតកំណត់ មុនពេលយើងទទួលបានការបង់ប្រាក់។ ប្រសិនបើអ្នកបានបង់រួចហើយ សូមកុំបង់ម្តងទៀត — ទំព័រនេះនៅតែពិនិត្យមួយរយៈ ហើយនឹងធ្វើបច្ចុប្បន្នភាពដោយខ្លួនឯង។ ប្រសិនបើមិនឃើញមានការផ្លាស់ប្តូរ សូមទាក់ទងយើងជាមួយលេខកូដការបញ្ជាទិញ {code} យើងនឹងដោះស្រាយជូន។",
     },
     cancelled: {
       title: "មិនមានការកាត់ប្រាក់ទេ",
       body: "ការបញ្ជាទិញនេះត្រូវបានបោះបង់ មុនពេលបង់ប្រាក់។ អ្នកអាចបញ្ជាទិញថ្មីបានគ្រប់ពេល។",
     },
     closed: { again: "បញ្ជាទិញម្តងទៀត" },
+    notFound: {
+      metaTitle: "រកមិនឃើញការបញ្ជាទិញ",
+      title: "រកមិនឃើញការបញ្ជាទិញនេះទេ",
+      body: "មិនមានការបញ្ជាទិញដែលមានលេខកូដ {code} ទេ។ សូមពិនិត្យ ហើយព្យាយាមម្តងទៀត — លេខកូដការបញ្ជាទិញចាប់ផ្តើមដោយ SK ហើយមាន 10 តួ ឧ. SK7F3K9Q2M។",
+      bodyNoCode: "សូមពិនិត្យលេខកូដការបញ្ជាទិញរបស់អ្នក ហើយព្យាយាមម្តងទៀត — លេខកូដការបញ្ជាទិញចាប់ផ្តើមដោយ SK ហើយមាន 10 តួ ឧ. SK7F3K9Q2M។",
+      help: "នៅតែរកមិនឃើញ? សូមទាក់ទងយើងជាមួយ ID អ្នកលេង និងបង្កាន់ដៃបង់ប្រាក់របស់អ្នក — យើងនឹងរកការបញ្ជាទិញរបស់អ្នកជូន។",
+    },
     details: {
       title: "ព័ត៌មានលម្អិតនៃការបញ្ជាទិញ",
       code: "លេខកូដការបញ្ជាទិញ",

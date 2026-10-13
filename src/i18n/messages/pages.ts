@@ -17,7 +17,7 @@ const messages = {
       items: {
         delivery: {
           q: "How long does delivery take?",
-          a: "Most orders are delivered within 1–5 minutes after the payment is confirmed. At busy times it can take up to 30 minutes.\n\nYou can follow the progress live on your order page, and if you turn on Telegram updates we'll message you as soon as it's done.",
+          a: "Our team delivers each order as soon as the payment is confirmed — usually within minutes. Late at night or at very busy times it can take longer.\n\nYou can follow the progress live on your order page, and if you turn on Telegram updates we'll message you as soon as it's done.",
         },
         findId: {
           q: "Where do I find my player ID?",
@@ -33,7 +33,7 @@ const messages = {
         },
         wrongId: {
           q: "I entered the wrong player ID. What should I do?",
-          a: "Contact us right away on Telegram or Messenger with your order code. If the top-up hasn't been delivered yet, we can correct it.\n\nOnce diamonds or UC are delivered to an account, the publisher usually doesn't let us move them, so please use the \"Check player name\" button before you pay.",
+          a: "Contact us right away on Telegram or Messenger with your order code. If the top-up hasn't been delivered yet, we can correct it.\n\nOnce diamonds or UC are delivered to an account, the publisher usually doesn't let us move them, so please double-check your player ID (and zone or server) before you pay. If the order form shows a player name, make sure it's yours.",
         },
         notReceived: {
           q: "I paid but haven't received my top-up. What now?",
@@ -41,11 +41,11 @@ const messages = {
         },
         expired: {
           q: "My QR code expired. Can I still pay?",
-          a: "Each KHQR code is valid for a limited time. If it expired before you paid, simply place a new order.\n\nIf you paid just as it expired, don't pay again — contact us with your order code and we'll match your payment.",
+          a: "Each KHQR code is valid for a limited time. If it expired before you paid, simply place a new order.\n\nIf you paid just as it expired, don't pay again — your order page keeps checking for a while and updates by itself. If it doesn't, contact us with your order code and we'll match your payment.",
         },
         refund: {
           q: "Can I get a refund?",
-          a: "Top-ups are digital goods delivered instantly, so we can't refund an order that was delivered to the player ID you entered.\n\nIf we can't deliver your order for any reason, we'll deliver it again or refund you in full — your choice.",
+          a: "Top-ups are digital goods that go straight into the game account, so we can't refund an order that was delivered to the player ID you entered.\n\nIf we can't deliver your order for any reason, we'll deliver it again or refund you in full — your choice.",
         },
         promo: {
           q: "How do I use a promo code?",
@@ -70,7 +70,7 @@ const messages = {
         },
         orders: {
           title: "Placing an order",
-          body: "You are responsible for entering the correct player ID, zone or server and choosing the right package. Please use the \"Check player name\" button when it is available. We deliver to the account details you provide and cannot be responsible for top-ups sent to an ID that was entered incorrectly.\n\nWe may refuse or cancel an order if we suspect fraud or abuse, or if the item becomes unavailable. If we cancel an order you have already paid for, we will refund you in full.",
+          body: "You are responsible for entering the correct player ID, zone or server and choosing the right package. Please double-check your player ID before you pay; when the order form shows a player name, make sure it is yours. We deliver to the account details you provide and cannot be responsible for top-ups sent to an ID that was entered incorrectly.\n\nWe may refuse or cancel an order if we suspect fraud or abuse, or if the item becomes unavailable. If we cancel an order you have already paid for, we will refund you in full.",
         },
         prices: {
           title: "Prices",
@@ -82,7 +82,7 @@ const messages = {
         },
         delivery: {
           title: "Delivery",
-          body: "Most orders are delivered within minutes after the payment is confirmed, but delivery can occasionally take longer because of game publisher or network delays. Your order page shows the current status. If delivery is delayed, we keep working on it and will contact you if we need more information.",
+          body: "Orders are delivered by our team, usually within minutes after the payment is confirmed. Delivery can take longer late at night, at busy times, or because of game publisher or network delays. Your order page shows the current status. If delivery is delayed, we keep working on it and will contact you if we need more information.",
         },
         refunds: {
           title: "Cancellations and refunds",
@@ -166,7 +166,7 @@ const messages = {
       items: {
         delivery: {
           q: "ការបញ្ចូលចំណាយពេលប៉ុន្មាន?",
-          a: "ការបញ្ជាទិញភាគច្រើនត្រូវបានបញ្ចូលក្នុងរយៈពេល 1–5 នាទី បន្ទាប់ពីការបង់ប្រាក់ត្រូវបានបញ្ជាក់។ នៅពេលមមាញឹក វាអាចចំណាយពេលរហូតដល់ 30 នាទី។\n\nអ្នកអាចតាមដានដំណើរការផ្ទាល់នៅលើទំព័រការបញ្ជាទិញរបស់អ្នក ហើយប្រសិនបើអ្នកបើកការជូនដំណឹងតាម Telegram យើងនឹងផ្ញើសារជូនអ្នកភ្លាមៗ នៅពេលបញ្ចូលរួច។",
+          a: "ក្រុមការងាររបស់យើងបញ្ចូលការបញ្ជាទិញនីមួយៗ ភ្លាមៗបន្ទាប់ពីការបង់ប្រាក់ត្រូវបានបញ្ជាក់ — ជាធម្មតាក្នុងរយៈពេលប៉ុន្មាននាទី។ ពេលយប់ជ្រៅ ឬពេលមមាញឹកខ្លាំង វាអាចយូរជាងនេះ។\n\nអ្នកអាចតាមដានដំណើរការផ្ទាល់នៅលើទំព័រការបញ្ជាទិញរបស់អ្នក ហើយប្រសិនបើអ្នកបើកការជូនដំណឹងតាម Telegram យើងនឹងផ្ញើសារជូនអ្នកភ្លាមៗ នៅពេលបញ្ចូលរួច។",
         },
         findId: {
           q: "តើខ្ញុំអាចរក ID អ្នកលេងរបស់ខ្ញុំនៅឯណា?",
@@ -182,7 +182,7 @@ const messages = {
         },
         wrongId: {
           q: "ខ្ញុំបញ្ចូល ID អ្នកលេងខុស។ តើត្រូវធ្វើដូចម្តេច?",
-          a: "សូមទាក់ទងយើងភ្លាមៗតាម Telegram ឬ Messenger ជាមួយលេខកូដការបញ្ជាទិញរបស់អ្នក។ ប្រសិនបើមិនទាន់បានបញ្ចូលទេ យើងអាចកែតម្រូវបាន។\n\nនៅពេល Diamonds ឬ UC ត្រូវបានបញ្ចូលទៅគណនីណាមួយហើយ ជាធម្មតាក្រុមហ៊ុនហ្គេមមិនអនុញ្ញាតឱ្យផ្ទេរវិញទេ ដូច្នេះសូមប្រើប៊ូតុង «ពិនិត្យឈ្មោះអ្នកលេង» មុនពេលបង់ប្រាក់។",
+          a: "សូមទាក់ទងយើងភ្លាមៗតាម Telegram ឬ Messenger ជាមួយលេខកូដការបញ្ជាទិញរបស់អ្នក។ ប្រសិនបើមិនទាន់បានបញ្ចូលទេ យើងអាចកែតម្រូវបាន។\n\nនៅពេល Diamonds ឬ UC ត្រូវបានបញ្ចូលទៅគណនីណាមួយហើយ ជាធម្មតាក្រុមហ៊ុនហ្គេមមិនអនុញ្ញាតឱ្យផ្ទេរវិញទេ ដូច្នេះសូមពិនិត្យ ID អ្នកលេង (និង Zone ឬ Server) ម្តងទៀតមុនពេលបង់ប្រាក់។ ប្រសិនបើទម្រង់បញ្ជាទិញបង្ហាញឈ្មោះអ្នកលេង សូមប្រាកដថាជាឈ្មោះរបស់អ្នក។",
         },
         notReceived: {
           q: "ខ្ញុំបានបង់ប្រាក់ហើយ តែមិនទាន់ទទួលបាន។ តើត្រូវធ្វើអ្វី?",
@@ -190,11 +190,11 @@ const messages = {
         },
         expired: {
           q: "កូដ QR របស់ខ្ញុំផុតកំណត់។ តើខ្ញុំនៅតែអាចបង់បានទេ?",
-          a: "កូដ KHQR នីមួយៗមានសុពលភាពក្នុងរយៈពេលកំណត់។ ប្រសិនបើវាផុតកំណត់មុនពេលអ្នកបង់ សូមធ្វើការបញ្ជាទិញថ្មី។\n\nប្រសិនបើអ្នកបានបង់ចំពេលវាផុតកំណត់ សូមកុំបង់ម្តងទៀត — សូមទាក់ទងយើងជាមួយលេខកូដការបញ្ជាទិញ យើងនឹងផ្ទៀងផ្ទាត់ការបង់ប្រាក់របស់អ្នក។",
+          a: "កូដ KHQR នីមួយៗមានសុពលភាពក្នុងរយៈពេលកំណត់។ ប្រសិនបើវាផុតកំណត់មុនពេលអ្នកបង់ សូមធ្វើការបញ្ជាទិញថ្មី។\n\nប្រសិនបើអ្នកបានបង់ចំពេលវាផុតកំណត់ សូមកុំបង់ម្តងទៀត — ទំព័រការបញ្ជាទិញរបស់អ្នកនៅតែពិនិត្យមួយរយៈ ហើយនឹងធ្វើបច្ចុប្បន្នភាពដោយខ្លួនឯង។ ប្រសិនបើមិនឃើញមានការផ្លាស់ប្តូរ សូមទាក់ទងយើងជាមួយលេខកូដការបញ្ជាទិញ យើងនឹងផ្ទៀងផ្ទាត់ការបង់ប្រាក់របស់អ្នក។",
         },
         refund: {
           q: "តើខ្ញុំអាចទទួលបានប្រាក់វិញទេ?",
-          a: "ការបញ្ចូលហ្គេមជាទំនិញឌីជីថលដែលបញ្ចូលភ្លាមៗ ដូច្នេះយើងមិនអាចសងប្រាក់វិញ សម្រាប់ការបញ្ជាទិញដែលបានបញ្ចូលទៅ ID អ្នកលេងដែលអ្នកបានផ្តល់រួចហើយនោះទេ។\n\nប្រសិនបើយើងមិនអាចបញ្ចូលការបញ្ជាទិញរបស់អ្នកបាន ដោយហេតុផលណាមួយ យើងនឹងបញ្ចូលម្តងទៀត ឬសងប្រាក់ជូនអ្នកវិញទាំងស្រុង — តាមជម្រើសរបស់អ្នក។",
+          a: "ការបញ្ចូលហ្គេមជាទំនិញឌីជីថលដែលចូលទៅគណនីហ្គេមផ្ទាល់ ដូច្នេះយើងមិនអាចសងប្រាក់វិញ សម្រាប់ការបញ្ជាទិញដែលបានបញ្ចូលទៅ ID អ្នកលេងដែលអ្នកបានផ្តល់រួចហើយនោះទេ។\n\nប្រសិនបើយើងមិនអាចបញ្ចូលការបញ្ជាទិញរបស់អ្នកបាន ដោយហេតុផលណាមួយ យើងនឹងបញ្ចូលម្តងទៀត ឬសងប្រាក់ជូនអ្នកវិញទាំងស្រុង — តាមជម្រើសរបស់អ្នក។",
         },
         promo: {
           q: "តើប្រើកូដបញ្ចុះតម្លៃដោយរបៀបណា?",
@@ -219,7 +219,7 @@ const messages = {
         },
         orders: {
           title: "ការធ្វើការបញ្ជាទិញ",
-          body: "អ្នកទទួលខុសត្រូវក្នុងការបញ្ចូល ID អ្នកលេង Zone ឬ Server ឱ្យបានត្រឹមត្រូវ និងជ្រើសរើសកញ្ចប់ឱ្យបានត្រឹមត្រូវ។ សូមប្រើប៊ូតុង «ពិនិត្យឈ្មោះអ្នកលេង» នៅពេលដែលមាន។ យើងបញ្ចូលទៅតាមព័ត៌មានគណនីដែលអ្នកផ្តល់ ហើយមិនអាចទទួលខុសត្រូវចំពោះការបញ្ចូលទៅ ID ដែលបានបញ្ចូលខុសនោះទេ។\n\nយើងអាចបដិសេធ ឬលុបចោលការបញ្ជាទិញ ប្រសិនបើយើងសង្ស័យថាមានការក្លែងបន្លំ ឬការរំលោភបំពាន ឬប្រសិនបើទំនិញនោះលែងមាន។ ប្រសិនបើយើងលុបចោលការបញ្ជាទិញដែលអ្នកបានបង់ប្រាក់រួច យើងនឹងសងប្រាក់ជូនអ្នកវិញទាំងស្រុង។",
+          body: "អ្នកទទួលខុសត្រូវក្នុងការបញ្ចូល ID អ្នកលេង Zone ឬ Server ឱ្យបានត្រឹមត្រូវ និងជ្រើសរើសកញ្ចប់ឱ្យបានត្រឹមត្រូវ។ សូមពិនិត្យ ID អ្នកលេងម្តងទៀតមុនពេលបង់ប្រាក់ ហើយប្រសិនបើទម្រង់បញ្ជាទិញបង្ហាញឈ្មោះអ្នកលេង សូមប្រាកដថាជាឈ្មោះរបស់អ្នក។ យើងបញ្ចូលទៅតាមព័ត៌មានគណនីដែលអ្នកផ្តល់ ហើយមិនអាចទទួលខុសត្រូវចំពោះការបញ្ចូលទៅ ID ដែលបានបញ្ចូលខុសនោះទេ។\n\nយើងអាចបដិសេធ ឬលុបចោលការបញ្ជាទិញ ប្រសិនបើយើងសង្ស័យថាមានការក្លែងបន្លំ ឬការរំលោភបំពាន ឬប្រសិនបើទំនិញនោះលែងមាន។ ប្រសិនបើយើងលុបចោលការបញ្ជាទិញដែលអ្នកបានបង់ប្រាក់រួច យើងនឹងសងប្រាក់ជូនអ្នកវិញទាំងស្រុង។",
         },
         prices: {
           title: "តម្លៃ",
@@ -231,7 +231,7 @@ const messages = {
         },
         delivery: {
           title: "ការបញ្ចូល",
-          body: "ការបញ្ជាទិញភាគច្រើនត្រូវបានបញ្ចូលក្នុងរយៈពេលប៉ុន្មាននាទី បន្ទាប់ពីការបង់ប្រាក់ត្រូវបានបញ្ជាក់ ប៉ុន្តែម្តងម្កាលវាអាចយូរជាងនេះ ដោយសារការពន្យារពេលពីក្រុមហ៊ុនហ្គេម ឬបណ្តាញ។ ទំព័រការបញ្ជាទិញរបស់អ្នកបង្ហាញស្ថានភាពបច្ចុប្បន្ន។ ប្រសិនបើការបញ្ចូលមានការយឺតយ៉ាវ យើងនៅតែបន្តដោះស្រាយ ហើយនឹងទាក់ទងអ្នក ប្រសិនបើត្រូវការព័ត៌មានបន្ថែម។",
+          body: "ការបញ្ជាទិញត្រូវបានបញ្ចូលដោយក្រុមការងាររបស់យើង ជាធម្មតាក្នុងរយៈពេលប៉ុន្មាននាទី បន្ទាប់ពីការបង់ប្រាក់ត្រូវបានបញ្ជាក់។ ការបញ្ចូលអាចយូរជាងនេះ នៅពេលយប់ជ្រៅ ពេលមមាញឹក ឬដោយសារការពន្យារពេលពីក្រុមហ៊ុនហ្គេម ឬបណ្តាញ។ ទំព័រការបញ្ជាទិញរបស់អ្នកបង្ហាញស្ថានភាពបច្ចុប្បន្ន។ ប្រសិនបើការបញ្ចូលមានការយឺតយ៉ាវ យើងនៅតែបន្តដោះស្រាយ ហើយនឹងទាក់ទងអ្នក ប្រសិនបើត្រូវការព័ត៌មានបន្ថែម។",
         },
         refunds: {
           title: "ការលុបចោល និងការសងប្រាក់វិញ",

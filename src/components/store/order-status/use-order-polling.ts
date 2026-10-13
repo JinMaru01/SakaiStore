@@ -8,7 +8,8 @@ import { pollIntervalFor } from "./helpers";
 /**
  * Keeps an order fresh by polling GET /api/orders/[code] (which also asks the
  * bank whether a pending KHQR was paid). Polls every 4s while the order is
- * moving, pauses while the tab is hidden, resumes immediately when it becomes
+ * moving, slowly for a while after it expired (a late payment can still
+ * arrive), pauses while the tab is hidden, resumes immediately when it becomes
  * visible again, and stops on final statuses.
  */
 export function useOrderPolling(initial: PublicOrder) {
@@ -40,15 +41,18 @@ export function useOrderPolling(initial: PublicOrder) {
   }, [code]);
 
   const status = order.status;
+  const expiresAt = order.paymentExpiresAt;
   useEffect(() => {
-    const interval = pollIntervalFor(status);
-    if (interval == null) return;
+    // Re-evaluated before every poll: expired orders stop once their late-payment window is over.
+    const nextInterval = () => pollIntervalFor(status, expiresAt, Date.now());
+    if (nextInterval() == null) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopped = false;
 
     const schedule = () => {
       clearTimeout(timer);
-      timer = setTimeout(tick, interval);
+      const interval = nextInterval();
+      if (interval != null) timer = setTimeout(tick, interval);
     };
     const tick = async () => {
       if (stopped) return;
@@ -70,7 +74,7 @@ export function useOrderPolling(initial: PublicOrder) {
       clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [status, refresh]);
+  }, [status, expiresAt, refresh]);
 
   // Abort any request still running when the page unmounts.
   useEffect(() => () => inFlight.current?.abort(), []);

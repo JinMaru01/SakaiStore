@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { resetEnvCache } from "@/lib/env";
 import { checkTransactionByMd5 } from "./bakong";
-import { checkPayment, createPayment } from "./index";
+import { checkPayment, createPayment, isProviderFailure } from "./index";
 
 const MD5 = "0123456789abcdef0123456789abcdef";
 
@@ -76,7 +76,7 @@ describe("checkTransactionByMd5", () => {
     mockFetch(respond({ message: "Unauthorized" }, 401));
     const result = await checkTransactionByMd5(MD5);
     expect(result.status).toBe("error");
-    expect(result).toMatchObject({ message: expect.stringMatching(/401/) });
+    expect(result).toMatchObject({ message: expect.stringMatching(/401/), code: "auth" });
   });
 
   it("times out instead of hanging", async () => {
@@ -87,31 +87,39 @@ describe("checkTransactionByMd5", () => {
         }),
     );
     const result = await checkTransactionByMd5(MD5, { timeoutMs: 30 });
-    expect(result).toEqual({ status: "error", message: "Bakong API timed out" });
+    expect(result).toEqual({ status: "error", message: "Bakong API timed out", code: "timeout" });
   });
 
   it("handles network failures, bad JSON and unknown error codes", async () => {
     mockFetch(async () => {
       throw new TypeError("fetch failed");
     });
-    expect((await checkTransactionByMd5(MD5)).status).toBe("error");
+    expect(await checkTransactionByMd5(MD5)).toMatchObject({ status: "error", code: "network" });
 
     mockFetch(async () => new Response("<html>", { status: 200 }));
-    expect(await checkTransactionByMd5(MD5)).toEqual({ status: "error", message: "Bakong API returned invalid JSON" });
+    expect(await checkTransactionByMd5(MD5)).toEqual({
+      status: "error",
+      message: "Bakong API returned invalid JSON",
+      code: "bad_response",
+    });
 
     mockFetch(respond({ responseCode: 1, errorCode: 6, responseMessage: "Unauthorized", data: null }));
-    expect((await checkTransactionByMd5(MD5)).status).toBe("error");
+    expect(await checkTransactionByMd5(MD5)).toMatchObject({ status: "error", code: "api_error" });
 
     mockFetch(respond({}, 500));
-    expect(await checkTransactionByMd5(MD5)).toEqual({ status: "error", message: "Bakong API HTTP 500" });
+    expect(await checkTransactionByMd5(MD5)).toEqual({ status: "error", message: "Bakong API HTTP 500", code: "http" });
   });
 
   it("does not call the API without a token or with a bad md5", async () => {
     const fetchFn = mockFetch(respond(paidBody()));
-    expect((await checkTransactionByMd5("not-an-md5")).status).toBe("error");
+    expect(await checkTransactionByMd5("not-an-md5")).toMatchObject({ status: "error", code: "invalid_md5" });
     vi.stubEnv("BAKONG_API_TOKEN", "");
     resetEnvCache();
-    expect(await checkTransactionByMd5(MD5)).toEqual({ status: "error", message: "BAKONG_API_TOKEN is not set" });
+    expect(await checkTransactionByMd5(MD5)).toEqual({
+      status: "error",
+      message: "BAKONG_API_TOKEN is not set",
+      code: "not_configured",
+    });
     expect(fetchFn).not.toHaveBeenCalled();
   });
 });
@@ -142,7 +150,9 @@ describe("checkPayment (provider facade)", () => {
       mockFetch(respond(paidBody({ amount: 1.0 })));
       const result = await checkPayment(order);
       expect(result.status).toBe("error");
-      expect(result).toMatchObject({ message: expect.stringMatching(/mismatch/i) });
+      expect(result).toMatchObject({ message: expect.stringMatching(/mismatch/i), code: "mismatch" });
+      // About this one order, not a Bakong outage.
+      expect(isProviderFailure(result)).toBe(false);
     });
 
     it("rejects a currency mismatch", async () => {
@@ -152,13 +162,21 @@ describe("checkPayment (provider facade)", () => {
 
     it("rejects a payment to another account", async () => {
       mockFetch(respond(paidBody({ toAccountId: "someone@else" })));
-      expect((await checkPayment(order)).status).toBe("error");
+      expect(await checkPayment(order)).toMatchObject({ status: "error", code: "mismatch" });
     });
 
     it("passes through unpaid and errors", async () => {
       mockFetch(respond(notFoundBody));
       expect(await checkPayment(order)).toEqual({ status: "unpaid" });
-      expect((await checkPayment({ ...order, khqrMd5: null })).status).toBe("error");
+      const noMd5 = await checkPayment({ ...order, khqrMd5: null });
+      expect(noMd5).toMatchObject({ status: "error", code: "invalid_md5" });
+      expect(isProviderFailure(noMd5)).toBe(false);
+
+      mockFetch(respond({ message: "Unauthorized" }, 401));
+      const auth = await checkPayment(order);
+      expect(auth).toMatchObject({ status: "error", code: "auth" });
+      expect(isProviderFailure(auth)).toBe(true);
+      expect(isProviderFailure({ status: "unpaid" })).toBe(false);
     });
   });
 });

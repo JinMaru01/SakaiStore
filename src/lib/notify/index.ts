@@ -1,6 +1,13 @@
 import "server-only";
 import type { Order, OrderStatus } from "@/db/schema";
-import { telegramNotifyOrderPaid, telegramNotifyStatusChanged } from "@/lib/telegram/notifications";
+import type { BakongHealthAlert } from "@/lib/telegram/format";
+import {
+  telegramNotifyOrderPaid,
+  telegramNotifyPaymentHealth,
+  telegramNotifyStatusChanged,
+} from "@/lib/telegram/notifications";
+
+export type { BakongHealthAlert };
 
 /**
  * Notification hooks called by the order service (src/lib/orders/service.ts)
@@ -14,11 +21,13 @@ import { telegramNotifyOrderPaid, telegramNotifyStatusChanged } from "@/lib/tele
 /**
  * Order just became `paid` (payment confirmed): alert every chat in
  * TELEGRAM_ADMIN_CHAT_IDS with ✅/❌ buttons, and message the customer if
- * they linked their Telegram chat.
+ * they linked their Telegram chat. `opts.previous` is the status it was paid
+ * from: a late payment on an expired or cancelled order gets a warning in
+ * the admin alert.
  */
-export async function notifyOrderPaid(order: Order): Promise<void> {
+export async function notifyOrderPaid(order: Order, opts: { previous?: OrderStatus } = {}): Promise<void> {
   try {
-    await telegramNotifyOrderPaid(order);
+    await telegramNotifyOrderPaid(order, opts.previous);
   } catch (err) {
     console.error(`[notify] paid notification failed for ${order.code}`, err);
   }
@@ -35,5 +44,17 @@ export async function notifyOrderStatusChanged(order: Order, previous: OrderStat
     await telegramNotifyStatusChanged(order, previous);
   } catch (err) {
     console.error(`[notify] status notification failed for ${order.code}`, err);
+  }
+}
+
+/**
+ * Payment provider health changed (src/lib/payments/health.ts decides when,
+ * rate-limited across instances): Bakong checks are failing, or work again.
+ */
+export async function notifyPaymentHealth(alert: BakongHealthAlert): Promise<void> {
+  try {
+    await telegramNotifyPaymentHealth(alert);
+  } catch (err) {
+    console.error(`[notify] payment health notification (${alert.kind}) failed`, err);
   }
 }

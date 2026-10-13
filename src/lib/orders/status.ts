@@ -10,21 +10,24 @@ export type { OrderStatus } from "./statuses";
  * double-apply side effects (see src/lib/orders/service.ts).
  *
  *   pending_payment ──paid──▶ paid ──▶ processing ──▶ delivered
- *        │                     │           │
- *        ├─▶ expired           └──────────▶├─▶ failed ──▶ processing (retry)
- *        └─▶ cancelled                      │           └─▶ refunded
- *                                           └─▶ refunded
+ *        │                     ▲ │           │
+ *        ├─▶ expired ──────────┤ └──────────▶├─▶ failed ──▶ processing (retry)
+ *        └─▶ cancelled ────────┘              │           └─▶ refunded
+ *            (late payment)                   └─▶ refunded
  */
 export const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
   pending_payment: ["paid", "expired", "cancelled"],
-  // A late payment for an expired order is still money received: allow expired -> paid.
+  // A late payment is still money received. Expired: the payment was confirmed
+  // after the window closed. Cancelled: the customer had already opened (or
+  // saved) the KHQR, which stays payable until it expires. Both only ever move
+  // on to "paid".
   expired: ["paid"],
+  cancelled: ["paid"],
   paid: ["processing", "delivered", "failed", "refunded"],
   processing: ["delivered", "failed", "refunded"],
   failed: ["processing", "delivered", "refunded"],
   delivered: ["refunded"],
   refunded: [],
-  cancelled: [],
 };
 
 export function canTransition(from: OrderStatus, to: OrderStatus): boolean {
@@ -42,8 +45,13 @@ export function allowedFrom(to: OrderStatus): OrderStatus[] {
 export const PAID_STATUSES: readonly OrderStatus[] = ["paid", "processing", "delivered", "failed", "refunded"];
 /** Statuses that count as revenue in analytics. */
 export const REVENUE_STATUSES: readonly OrderStatus[] = ["paid", "processing", "delivered"];
-/** No further automatic changes will happen. */
+/**
+ * The order is closed for the customer. Expired and cancelled orders can still
+ * become "paid" if a late payment is found (see ORDER_TRANSITIONS).
+ */
 export const FINAL_STATUSES: readonly OrderStatus[] = ["delivered", "refunded", "cancelled", "expired"];
+/** Unpaid orders whose KHQR may still have been paid: reconcile keeps checking them for a while. */
+export const LATE_PAYMENT_STATUSES: readonly OrderStatus[] = ["expired", "cancelled"];
 
 export function isPaidStatus(s: OrderStatus) {
   return PAID_STATUSES.includes(s);

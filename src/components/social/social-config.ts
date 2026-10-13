@@ -65,27 +65,43 @@ export function telegramHandle(value: string | null | undefined): string | null 
   return url ? `@${url.slice("https://t.me/".length)}` : null;
 }
 
-export type ChatLinks = { messenger: string | null; telegram: string | null };
-
-/**
- * Where customers can chat with a human: Messenger (m.me link) and Telegram.
- * The support username wins over the public channel link, because a channel
- * cannot receive private messages.
- */
-export function supportChatLinks(
-  store: Pick<StoreSettings, "supportTelegram"> | null | undefined,
-  social: Pick<SocialSettings, "messengerUrl" | "telegramUrl"> | null | undefined,
-): ChatLinks {
-  return {
-    messenger: safeExternalUrl(social?.messengerUrl),
-    telegram: telegramUserUrl(store?.supportTelegram) ?? safeExternalUrl(social?.telegramUrl),
-  };
-}
-
 /** tel: link for a display phone number like "012 345 678" or "+855 12 345 678". */
 export function telHref(phone: string | null | undefined): string | null {
   const digits = phone?.replace(/[^\d+]/g, "") ?? "";
   return digits.replace(/\D/g, "").length >= 6 ? `tel:${digits}` : null;
+}
+
+export type SupportPhone = { href: string; label: string };
+
+export type ChatLinks = {
+  messenger: string | null;
+  telegram: string | null;
+  /** The support phone (tel: link + display number): the fallback when no chat app is configured. */
+  phone?: SupportPhone | null;
+};
+
+/**
+ * Where customers can reach a human: Messenger (m.me link), the support
+ * Telegram username and the support phone. The public Telegram link
+ * (social.telegramUrl) is deliberately NOT used: it is usually a channel,
+ * and a channel cannot receive private messages.
+ */
+export function supportChatLinks(
+  store: (Pick<StoreSettings, "supportTelegram"> & Partial<Pick<StoreSettings, "supportPhone">>) | null | undefined,
+  social: Pick<SocialSettings, "messengerUrl"> | null | undefined,
+): ChatLinks {
+  const phone = store?.supportPhone?.trim() ?? "";
+  const href = telHref(phone);
+  return {
+    messenger: safeExternalUrl(social?.messengerUrl),
+    telegram: telegramUserUrl(store?.supportTelegram),
+    phone: href ? { href, label: phone } : null,
+  };
+}
+
+/** Any way to reach support at all (chat app or phone). */
+export function hasSupportContact(chat: ChatLinks): boolean {
+  return !!(chat.messenger || chat.telegram || chat.phone);
 }
 
 /** "Telegram @handle · 012 345 678" for legal pages and help text; null when nothing is set. */

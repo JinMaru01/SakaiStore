@@ -17,8 +17,9 @@ export function SiteFooter({ settings, t, year }: { settings: Settings; t: Trans
   const tgHandle = telegramHandle(store.supportTelegram);
 
   return (
-    // Pages with the fixed mobile pay bar (data-bottom-bar) get extra bottom room so it never hides the footer.
-    <footer className="mt-16 border-t border-border bg-surface/40 max-lg:[body:has([data-bottom-bar])_&]:pb-28">
+    // Pages with the fixed mobile pay bar (data-bottom-bar) get extra bottom room so it never hides the footer
+    // (--bottom-bar-h is the bar's measured height, set by MobileBar).
+    <footer className="mt-16 border-t border-border bg-surface/40 max-lg:[body:has([data-bottom-bar])_&]:pb-[calc(var(--bottom-bar-h,7rem)_+_1rem)]">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div>
           <Link href="/" className="inline-block rounded-lg" aria-label={store.name}>

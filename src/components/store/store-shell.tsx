@@ -30,7 +30,7 @@ export async function StoreShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <SiteFooter settings={settings} t={t} year={year} />
-      <FloatingChat messenger={chat.messenger} telegram={chat.telegram} />
+      <FloatingChat {...chat} />
     </>
   );
 }

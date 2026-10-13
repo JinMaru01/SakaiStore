@@ -19,7 +19,18 @@ import { ContactStep, PHONE_RE, TELEGRAM_RE } from "./contact-step";
 import { MobileBar, ORDER_FORM_ID, SummaryCard, type SummaryProps } from "./order-summary";
 import { PackageGrid } from "./package-grid";
 import { PromoStep } from "./promo-step";
-import type { FormGame, FormPackage, LookupState, PromoState, PromoValidateResponse } from "./types";
+import { promoSubmitMessage } from "./promo-text";
+import {
+  lookupOutcome,
+  minOrderFrom,
+  type FollowTerms,
+  type FormGame,
+  type FormPackage,
+  type LookupState,
+  type PlayerLookupResponse,
+  type PromoState,
+  type PromoValidateResponse,
+} from "./types";
 import {
   normalizePlayerId,
   normalizeZoneId,
@@ -35,6 +46,10 @@ type Props = {
   khrPerUsd: number;
   /** Follower promo code advertised on Facebook/TikTok (settings.marketing.followPromoCode). */
   followCode: string;
+  /** Its conditions (minimum order, first top-up only), shown next to the code. */
+  followTerms?: FollowTerms | null;
+  /** A player-name lookup provider is configured (PLAYER_LOOKUP_MODE ≠ none). */
+  nameLookup: boolean;
   /** Promo code from the shared link (?promo=CODE), applied once a package is picked. */
   initialPromo?: string;
   /** Extra content rendered under the steps (share bar, game description). */
@@ -46,7 +61,16 @@ type ServerField = { field: "playerId" | "zoneId"; error: string } | null;
 const PROMO_PREFIX = "promo_";
 const FORM_ID = ORDER_FORM_ID;
 
-export function OrderForm({ game, packages, khrPerUsd, followCode, initialPromo = "", children }: Props) {
+export function OrderForm({
+  game,
+  packages,
+  khrPerUsd,
+  followCode,
+  followTerms,
+  nameLookup,
+  initialPromo = "",
+  children,
+}: Props) {
   const t = useT();
   const router = useRouter();
   const hasZone = usesZone(game);
@@ -80,6 +104,8 @@ export function OrderForm({ game, packages, khrPerUsd, followCode, initialPromo 
   const [packageError, setPackageError] = useState(false);
   const [promoInput, setPromoInput] = useState(initialPromo.toUpperCase().slice(0, 32));
   const [promo, setPromo] = useState<PromoState>({ status: "idle" });
+  // A promo error the customer was already told about at checkout: the next Pay continues without the code.
+  const [ackedPromoError, setAckedPromoError] = useState<PromoState | null>(null);
   const autoApplyPromo = useRef(!!initialPromo);
   const promoRequest = useRef(0);
   const [phone, setPhone] = useState("");
@@ -130,24 +156,34 @@ export function OrderForm({ game, packages, khrPerUsd, followCode, initialPromo 
     if (idIssue || zoneIssue) return;
     const key = lookupKey;
     setLookup({ key, status: "loading" });
-    const res = await apiRequest<{ ok: true; playerName: string | null }>("/api/players/lookup", {
+    const res = await apiRequest<PlayerLookupResponse>("/api/players/lookup", {
       body: { gameSlug: game.slug, playerId: normId, zoneId: normZone || undefined },
     });
     setLookup((prev) => {
       if (prev?.key !== key) return prev; // inputs changed meanwhile
-      return res.ok
-        ? { key, status: "ok", playerName: res.data.playerName ?? null }
-        : { key, status: "error", error: res.error };
+      if (!res.ok) return { key, status: "error", error: res.error };
+      const outcome = lookupOutcome(res.data);
+      return { key, status: "ok", outcome, playerName: outcome === "found" ? res.data.playerName : null };
     });
   }
+
+  // The player the promo is checked for, once the ID (and zone) are well-formed: first-order codes
+  // depend on it, so the "first top-up only" error shows before checkout instead of at Pay.
+  const promoPlayerKey = !idIssue && !zoneIssue ? lookupKey : "";
 
   async function validatePromo(code: string, forPackage: FormPackage) {
     const normalized = code.replace(/\s+/g, "").toUpperCase();
     if (!normalized) return;
     const req = ++promoRequest.current;
+    const playerKey = promoPlayerKey;
     setPromo({ status: "loading", code: normalized });
     const res = await apiRequest<PromoValidateResponse>("/api/promo/validate", {
-      body: { code: normalized, gameSlug: game.slug, packageId: forPackage.id },
+      body: {
+        code: normalized,
+        gameSlug: game.slug,
+        packageId: forPackage.id,
+        ...(playerKey ? { playerId: normId, zoneId: normZone || undefined } : {}),
+      },
     });
     if (req !== promoRequest.current) return; // a newer request superseded this one
     if (res.ok) {
@@ -157,11 +193,19 @@ export function OrderForm({ game, packages, khrPerUsd, followCode, initialPromo 
         packageId: forPackage.id,
         discountCents: res.data.discountCents,
         description: res.data.description ?? null,
+        playerKey,
       });
       setPromoInput(res.data.code ?? normalized);
     } else {
-      setPromo({ status: "error", code: normalized, error: res.error });
+      setPromo({ status: "error", code: normalized, error: res.error, minOrderCents: minOrderFrom(res.body) });
     }
+  }
+
+  /** After the ID or zone changes, re-check a code that was checked for another player (first-order rule). */
+  function recheckPromoForPlayer() {
+    if (!pkg || !promoPlayerKey) return;
+    if (promo.status === "applied" && promo.playerKey !== promoPlayerKey) void validatePromo(promo.code, pkg);
+    else if (promo.status === "error" && promo.error === "first_order_only") void validatePromo(promo.code, pkg);
   }
 
   function selectPackage(p: FormPackage) {
@@ -231,6 +275,15 @@ export function OrderForm({ game, packages, khrPerUsd, followCode, initialPromo 
     }
     if (promo.status === "loading") return; // wait for the discount to settle
 
+    // A code that failed in the promo step: say so once next to Pay (instead of silently charging the
+    // full price); tapping Pay again continues without the code.
+    if (promo.status === "error" && promo.error !== "need_package" && ackedPromoError !== promo) {
+      setAckedPromoError(promo);
+      setSubmitError(promoSubmitMessage(t, promo.error, promo.minOrderCents));
+      document.getElementById("step-promo")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
     // An applied code, or one typed without tapping Apply (the server validates it either way).
     const typed = promo.status === "idle" ? promoInput.replace(/\s+/g, "").toUpperCase() : "";
     const promoCode =
@@ -252,9 +305,16 @@ export function OrderForm({ game, packages, khrPerUsd, followCode, initialPromo 
     if (!res.ok) {
       setSubmitting(false);
       if (res.error.startsWith(PROMO_PREFIX)) {
-        // The code stopped working (expired / used up) between preview and checkout.
-        setPromo({ status: "error", code: promoCode ?? promoInput, error: res.error.slice(PROMO_PREFIX.length) });
-        setSubmitError(t("game.errors.promo_changed"));
+        // The code can't be used (expired / used up / first top-up only / below the minimum).
+        const failed: PromoState = {
+          status: "error",
+          code: promoCode ?? promoInput,
+          error: res.error.slice(PROMO_PREFIX.length),
+          minOrderCents: minOrderFrom(res.body),
+        };
+        setPromo(failed);
+        setAckedPromoError(failed); // already explained here: Pay again continues without it
+        setSubmitError(promoSubmitMessage(t, failed.error, failed.minOrderCents));
         return;
       }
       if (res.error === "invalid_id" || res.error === "invalid_zone") {
@@ -319,10 +379,14 @@ export function OrderForm({ game, packages, khrPerUsd, followCode, initialPromo 
             zoneIssue={touched.zoneId || submitted ? zoneIssue : null}
             serverField={serverField}
             lookup={currentLookup}
+            nameLookup={nameLookup}
             remembered={usingMemory}
             onPlayerIdChange={onPlayerIdChange}
             onZoneChange={onZoneChange}
-            onBlur={(f) => setTouched((s) => ({ ...s, [f]: true }))}
+            onBlur={(f) => {
+              setTouched((s) => ({ ...s, [f]: true }));
+              recheckPromoForPlayer();
+            }}
             onCheck={checkName}
             onForget={onForget}
           />
@@ -337,6 +401,7 @@ export function OrderForm({ game, packages, khrPerUsd, followCode, initialPromo 
             value={promoInput}
             state={promo}
             followCode={followCode}
+            followTerms={followTerms}
             onChange={(v) => {
               setPromoInput(v);
               if (promo.status === "error") setPromo({ status: "idle" });

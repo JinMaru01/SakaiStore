@@ -6,12 +6,12 @@ const messages = {
     meta: {
       title: "Game top-up in Cambodia — MLBB, Free Fire, PUBG with KHQR",
       description:
-        "Top up Mobile Legends diamonds, Free Fire, PUBG Mobile UC and more in Cambodia. Pay with KHQR (ABA, ACLEDA, Wing) and get your top-up in minutes.",
+        "Top up Mobile Legends diamonds, Free Fire, PUBG Mobile UC and more in Cambodia. Pay with KHQR (ABA, ACLEDA, Wing) — fast delivery, usually within minutes.",
     },
     hero: {
       badge: "Cambodia's game top-up store",
       titleLine1: "Top up your games",
-      titleLine2: "in minutes, for less",
+      titleLine2: "fast, at fair prices",
       subtitle:
         "Diamonds, UC and passes for Mobile Legends, Free Fire, PUBG Mobile and more. Scan to pay with KHQR from ABA, ACLEDA, Wing or any bank app.",
       cta: "Top up now",
@@ -20,10 +20,10 @@ const messages = {
       paidToastSub: "Delivering your diamonds…",
     },
     trust: {
-      instant: "Instant delivery",
+      fast: "Fast delivery",
       khqr: "Pay with KHQR",
       support: "Real human support",
-      cheapest: "Cheapest prices",
+      fairPrices: "Fair prices",
     },
     games: {
       popularTitle: "Popular games",
@@ -39,12 +39,12 @@ const messages = {
       step1: { title: "Choose your game", body: "Pick the game and the package you want." },
       step2: {
         title: "Enter your player ID",
-        body: "Type your ID (and zone or server). Check the name to make sure it's you.",
+        body: "Type your ID (and zone or server) exactly as it appears in the game, and double-check it — the top-up goes straight to that account.",
       },
       step3: { title: "Pay with KHQR", body: "Scan the QR with ABA, ACLEDA, Wing or any Bakong bank app." },
       step4: {
         title: "Get your top-up",
-        body: "Payment confirms automatically and we deliver to your account in minutes.",
+        body: "Payment confirms automatically, then our team delivers to your account — usually within minutes, sometimes longer late at night.",
       },
     },
     payments: {
@@ -58,7 +58,7 @@ const messages = {
     },
     cta: {
       title: "Ready to level up?",
-      body: "Pick your game, pay with KHQR and get back to playing in minutes.",
+      body: "Pick your game, pay with KHQR and get back to playing — fast.",
       button: "Choose a game",
     },
   },
@@ -66,7 +66,7 @@ const messages = {
     meta: {
       title: "បញ្ចូលហ្គេមនៅកម្ពុជា — MLBB, Free Fire, PUBG តាម KHQR",
       description:
-        "បញ្ចូល Diamonds Mobile Legends, Free Fire, UC PUBG Mobile និងហ្គេមជាច្រើនទៀតនៅកម្ពុជា។ បង់ប្រាក់ដោយ KHQR (ABA, ACLEDA, Wing) ហើយទទួលបានក្នុងរយៈពេលប៉ុន្មាននាទី។",
+        "បញ្ចូល Diamonds Mobile Legends, Free Fire, UC PUBG Mobile និងហ្គេមជាច្រើនទៀតនៅកម្ពុជា។ បង់ប្រាក់ដោយ KHQR (ABA, ACLEDA, Wing) — បញ្ចូលរហ័ស ជាធម្មតាក្នុងរយៈពេលប៉ុន្មាននាទី។",
     },
     hero: {
       badge: "ហាងបញ្ចូលហ្គេមសម្រាប់អ្នកលេងនៅកម្ពុជា",
@@ -80,10 +80,10 @@ const messages = {
       paidToastSub: "កំពុងបញ្ចូល Diamonds ជូនអ្នក…",
     },
     trust: {
-      instant: "បញ្ចូលភ្លាមៗ",
+      fast: "បញ្ចូលរហ័ស",
       khqr: "បង់ប្រាក់ដោយ KHQR",
       support: "មានមនុស្សពិតជួយ",
-      cheapest: "តម្លៃថោកបំផុត",
+      fairPrices: "តម្លៃសមរម្យ",
     },
     games: {
       popularTitle: "ហ្គេមពេញនិយម",
@@ -99,7 +99,7 @@ const messages = {
       step1: { title: "ជ្រើសរើសហ្គេម", body: "ជ្រើសរើសហ្គេម និងកញ្ចប់ដែលអ្នកចង់បាន។" },
       step2: {
         title: "បញ្ចូល ID អ្នកលេង",
-        body: "វាយបញ្ចូល ID (និង Zone ឬ Server) របស់អ្នក។ ចុចពិនិត្យឈ្មោះ ដើម្បីប្រាកដថាត្រឹមត្រូវ។",
+        body: "វាយបញ្ចូល ID (និង Zone ឬ Server) ឱ្យដូចក្នុងហ្គេម ហើយពិនិត្យម្តងទៀត — ការបញ្ចូលនឹងចូលទៅគណនីនោះផ្ទាល់។",
       },
       step3: {
         title: "បង់ប្រាក់ដោយ KHQR",
@@ -107,7 +107,7 @@ const messages = {
       },
       step4: {
         title: "ទទួលបានការបញ្ចូល",
-        body: "ការបង់ប្រាក់ត្រូវបានបញ្ជាក់ដោយស្វ័យប្រវត្តិ ហើយយើងបញ្ចូលទៅគណនីរបស់អ្នកក្នុងរយៈពេលប៉ុន្មាននាទី។",
+        body: "ការបង់ប្រាក់ត្រូវបានបញ្ជាក់ដោយស្វ័យប្រវត្តិ បន្ទាប់មកក្រុមការងាររបស់យើងបញ្ចូលទៅគណនីរបស់អ្នក — ជាធម្មតាក្នុងរយៈពេលប៉ុន្មាននាទី ប៉ុន្តែពេលយប់ជ្រៅអាចយូរជាងនេះ។",
       },
     },
     payments: {
@@ -121,7 +121,7 @@ const messages = {
     },
     cta: {
       title: "ត្រៀមខ្លួនឡើងកម្រិតហើយឬនៅ?",
-      body: "ជ្រើសរើសហ្គេម បង់ប្រាក់ដោយ KHQR ហើយត្រឡប់ទៅលេងវិញក្នុងរយៈពេលប៉ុន្មាននាទី។",
+      body: "ជ្រើសរើសហ្គេម បង់ប្រាក់ដោយ KHQR ហើយត្រឡប់ទៅលេងវិញយ៉ាងរហ័ស។",
       button: "ជ្រើសរើសហ្គេម",
     },
   },

@@ -14,8 +14,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MessengerIcon, TelegramIcon } from "@/components/icons/brand";
-import type { ChatLinks } from "@/components/social/social-config";
+import { TelegramIcon } from "@/components/icons/brand";
+import { hasSupportContact, type ChatLinks } from "@/components/social/social-config";
+import { SupportButtons } from "@/components/social/support-buttons";
 import { ShareBar } from "@/components/social/share-bar";
 import { Button, buttonClasses, Spinner, StatusBadge } from "@/components/ui";
 import { useT } from "@/i18n/client";
@@ -75,7 +76,6 @@ export function OrderView({ initialOrder, merchantName, khrPerUsd, chat, share, 
   }
 
   const status = order.status;
-  const polling = pollIntervalFor(status) != null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
@@ -87,15 +87,7 @@ export function OrderView({ initialOrder, merchantName, khrPerUsd, chat, share, 
           <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">{t(`order.titles.${status}`)}</h1>
         </div>
         <div className="flex items-center gap-3">
-          {polling && (
-            <span className="hidden items-center gap-1.5 text-xs text-muted sm:inline-flex">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
-              </span>
-              {t("order.header.live")}
-            </span>
-          )}
+          <LiveIndicator order={order} />
           <StatusBadge status={status}>{t(`order.status.${status}`)}</StatusBadge>
         </div>
       </div>
@@ -227,31 +219,14 @@ export function OrderView({ initialOrder, merchantName, khrPerUsd, chat, share, 
 
         <aside className="space-y-4">
           <OrderDetails order={order} khrPerUsd={khrPerUsd} />
-          {order.telegramLink && !order.telegramLinked && pollIntervalFor(status) != null && (
-            <section className="rounded-[var(--radius-card)] border border-telegram/40 bg-telegram/10 p-4">
-              <h2 className="flex items-center gap-2 font-semibold">
-                <TelegramIcon className="h-5 w-5 text-telegram" />
-                {t("order.telegram.title")}
-              </h2>
-              <p className="mt-1 text-sm text-muted">{t("order.telegram.body")}</p>
-              <a
-                href={order.telegramLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-telegram px-4 text-sm font-semibold text-white hover:brightness-110"
-              >
-                <TelegramIcon className="h-4 w-4" />
-                {t("order.telegram.button")}
-              </a>
-            </section>
-          )}
+          <TelegramUpdatesCard order={order} />
           {order.telegramLinked && (
             <p className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-muted">
               <BadgeCheck className="h-4 w-4 text-telegram" aria-hidden="true" />
               {t("order.telegram.linked")}
             </p>
           )}
-          {(chat.messenger || chat.telegram) && (
+          {hasSupportContact(chat) && (
             <section className="rounded-[var(--radius-card)] border border-border bg-surface p-4">
               <h2 className="font-semibold">{t("order.help.title")}</h2>
               <p className="mt-1 text-sm text-muted">{t("order.help.body", { code: order.code })}</p>
@@ -261,6 +236,56 @@ export function OrderView({ initialOrder, merchantName, khrPerUsd, chat, share, 
         </aside>
       </div>
     </div>
+  );
+}
+
+/**
+ * Whether the page is still checking this order: while it moves, and for a
+ * while after the QR expired (a late payment can still arrive). Uses the
+ * shared clock (null during SSR, so server and hydrated markup match).
+ */
+function useStillChecking(order: PublicOrder): boolean {
+  const now = useNow();
+  return pollIntervalFor(order.status, order.paymentExpiresAt, now) != null;
+}
+
+function LiveIndicator({ order }: { order: PublicOrder }) {
+  const t = useT();
+  const checking = useStillChecking(order);
+  if (!checking) return null;
+  return (
+    <span className="hidden items-center gap-1.5 text-xs text-muted sm:inline-flex">
+      <span className="relative flex h-2 w-2">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
+      </span>
+      {t("order.header.live")}
+    </span>
+  );
+}
+
+/** "Get updates on Telegram" while the order can still change, including a late payment after expiry. */
+function TelegramUpdatesCard({ order }: { order: PublicOrder }) {
+  const t = useT();
+  const checking = useStillChecking(order);
+  if (!order.telegramLink || order.telegramLinked || !checking) return null;
+  return (
+    <section className="rounded-[var(--radius-card)] border border-telegram/40 bg-telegram/10 p-4">
+      <h2 className="flex items-center gap-2 font-semibold">
+        <TelegramIcon className="h-5 w-5 text-telegram" />
+        {t("order.telegram.title")}
+      </h2>
+      <p className="mt-1 text-sm text-muted">{t("order.telegram.body")}</p>
+      <a
+        href={order.telegramLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-telegram px-4 text-sm font-semibold text-white hover:brightness-110"
+      >
+        <TelegramIcon className="h-4 w-4" />
+        {t("order.telegram.button")}
+      </a>
+    </section>
   );
 }
 
@@ -392,43 +417,6 @@ function PendingPanel({
         </div>
       </div>
     </section>
-  );
-}
-
-function SupportButtons({ chat, className, compact }: { chat: ChatLinks; className?: string; compact?: boolean }) {
-  const t = useT();
-  if (!chat.messenger && !chat.telegram) return null;
-  const btn = cn(
-    "inline-flex items-center justify-center gap-2 rounded-xl px-4 font-semibold text-white hover:brightness-110",
-    compact ? "h-10 text-sm" : "h-11",
-  );
-  return (
-    <div className={cn("flex flex-col gap-2 sm:flex-row", compact && "sm:flex-col", className)}>
-      {chat.telegram && (
-        <a
-          href={chat.telegram}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => track("Contact")}
-          className={cn(btn, "bg-telegram")}
-        >
-          <TelegramIcon className="h-4 w-4" />
-          {t("social.chat.telegram")}
-        </a>
-      )}
-      {chat.messenger && (
-        <a
-          href={chat.messenger}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => track("Contact")}
-          className={cn(btn, "bg-messenger")}
-        >
-          <MessengerIcon className="h-4 w-4" />
-          {t("social.chat.messenger")}
-        </a>
-      )}
-    </div>
   );
 }
 

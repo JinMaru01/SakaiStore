@@ -14,6 +14,9 @@ const messages = {
       promoBefore: "Follow us and use code",
       copyCode: "Copy code",
       copyCodeAria: "Copy promo code {code}",
+      /** Conditions of the follower code, shown next to it (from the promo code settings). */
+      minOrder: "For orders from {amount}",
+      firstOrder: "First top-up only",
     },
     share: {
       title: "Share",
@@ -23,9 +26,9 @@ const messages = {
       copyHint: "Copy the link to paste in your TikTok bio, comments or DMs.",
       more: "More",
       gameHeading: "Share this top-up with friends",
-      gameText: "Top up {game} from {price} at {store} — pay with KHQR, delivered in minutes.",
-      gameTextNoPrice: "Top up {game} at {store} — pay with KHQR, delivered in minutes.",
-      deliveredText: "Just topped up {game} at {store} — fast and cheap with KHQR!",
+      gameText: "Top up {game} from {price} at {store} — pay with KHQR, fast delivery.",
+      gameTextNoPrice: "Top up {game} at {store} — pay with KHQR, fast delivery.",
+      deliveredText: "Just topped up {game} at {store} — fast and easy with KHQR!",
     },
     chat: {
       title: "Need help? Chat with a real person.",
@@ -33,6 +36,7 @@ const messages = {
       close: "Close chat options",
       messenger: "Chat on Messenger",
       telegram: "Chat on Telegram",
+      call: "Call {phone}",
     },
   },
   km: {
@@ -47,6 +51,8 @@ const messages = {
       promoBefore: "តាមដានយើង ហើយប្រើកូដ",
       copyCode: "ចម្លងកូដ",
       copyCodeAria: "ចម្លងកូដបញ្ចុះតម្លៃ {code}",
+      minOrder: "សម្រាប់ការបញ្ជាទិញចាប់ពី {amount}",
+      firstOrder: "សម្រាប់តែការបញ្ចូលលើកដំបូង",
     },
     share: {
       title: "ចែករំលែក",
@@ -56,9 +62,9 @@ const messages = {
       copyHint: "ចម្លងតំណ ដើម្បីបិទភ្ជាប់ក្នុង bio TikTok មតិយោបល់ ឬសារផ្ទាល់។",
       more: "ផ្សេងទៀត",
       gameHeading: "ចែករំលែកការបញ្ចូលនេះទៅមិត្តភក្តិ",
-      gameText: "បញ្ចូល {game} ចាប់ពី {price} នៅ {store} — បង់ប្រាក់ដោយ KHQR បញ្ចូលរួចក្នុងប៉ុន្មាននាទី។",
-      gameTextNoPrice: "បញ្ចូល {game} នៅ {store} — បង់ប្រាក់ដោយ KHQR បញ្ចូលរួចក្នុងប៉ុន្មាននាទី។",
-      deliveredText: "ទើបតែបញ្ចូល {game} នៅ {store} — លឿន និងថោកតាម KHQR!",
+      gameText: "បញ្ចូល {game} ចាប់ពី {price} នៅ {store} — បង់ប្រាក់ដោយ KHQR បញ្ចូលរហ័ស។",
+      gameTextNoPrice: "បញ្ចូល {game} នៅ {store} — បង់ប្រាក់ដោយ KHQR បញ្ចូលរហ័ស។",
+      deliveredText: "ទើបតែបញ្ចូល {game} នៅ {store} — លឿន និងងាយស្រួលតាម KHQR!",
     },
     chat: {
       title: "ត្រូវការជំនួយ? ជជែកជាមួយមនុស្សពិតប្រាកដ។",
@@ -66,6 +72,7 @@ const messages = {
       close: "បិទជម្រើសជជែក",
       messenger: "ជជែកតាម Messenger",
       telegram: "ជជែកតាម Telegram",
+      call: "ហៅទូរស័ព្ទ {phone}",
     },
   },
 } satisfies NamespaceMessages;

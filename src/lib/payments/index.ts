@@ -1,7 +1,7 @@
 import "server-only";
 import type { Order } from "@/db/schema";
 import { env } from "@/lib/env";
-import { checkTransactionByMd5 } from "./bakong";
+import { checkTransactionByMd5, type BakongErrorCode } from "./bakong";
 import { buildKhqr } from "./khqr";
 
 /**
@@ -46,10 +46,22 @@ export function createPayment({ code, totalCents, now = new Date() }: PaymentReq
   return { khqr: qr, md5, expiresAt };
 }
 
+/**
+ * Why a check failed: a Bakong problem (BakongErrorCode, see ./bakong.ts), or
+ * `mismatch` — Bakong reported a payment that does not match the order
+ * (amount, currency or receiving account), which is about that one order.
+ */
+export type PaymentErrorCode = BakongErrorCode | "mismatch";
+
 export type PaymentCheckResult =
   | { status: "paid"; ref: string | null; payload: unknown }
   | { status: "unpaid" }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string; code: PaymentErrorCode };
+
+/** True when the error says the provider is failing (token, network, outage), not something about one order. */
+export function isProviderFailure(result: PaymentCheckResult): boolean {
+  return result.status === "error" && result.code !== "mismatch" && result.code !== "invalid_md5";
+}
 
 type CheckableOrder = Pick<Order, "code" | "khqrMd5" | "totalCents" | "currency">;
 
@@ -62,7 +74,7 @@ export async function checkPayment(order: CheckableOrder): Promise<PaymentCheckR
   const e = env();
   // Mock payments are confirmed via the simulate endpoint, never by polling.
   if (e.PAYMENT_MODE === "mock") return { status: "unpaid" };
-  if (!order.khqrMd5) return { status: "error", message: "Order has no KHQR md5" };
+  if (!order.khqrMd5) return { status: "error", message: "Order has no KHQR md5", code: "invalid_md5" };
 
   const result = await checkTransactionByMd5(order.khqrMd5);
   if (result.status !== "paid") return result;
@@ -73,13 +85,13 @@ export async function checkPayment(order: CheckableOrder): Promise<PaymentCheckR
       order.totalCents / 100
     ).toFixed(2)} ${order.currency}`;
     console.error(`[payments] ${message}`);
-    return { status: "error", message };
+    return { status: "error", message, code: "mismatch" };
   }
   const expectedAccount = e.BAKONG_ACCOUNT_ID?.trim().toLowerCase();
   if (result.toAccountId && expectedAccount && result.toAccountId.toLowerCase() !== expectedAccount) {
     const message = `Payment for ${order.code} went to ${result.toAccountId}, expected ${e.BAKONG_ACCOUNT_ID}`;
     console.error(`[payments] ${message}`);
-    return { status: "error", message };
+    return { status: "error", message, code: "mismatch" };
   }
   return { status: "paid", ref: result.ref, payload: result.raw };
 }

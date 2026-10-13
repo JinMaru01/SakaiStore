@@ -31,13 +31,20 @@ const messages = {
       check: "Check player name",
       checking: "Checking…",
       playerFound: "Player:",
-      formatOk: "ID format looks good.",
+      formatOnly:
+        "This ID looks right, but we can't see the player name for this game. Please double-check it — top-ups sent to a wrong ID can't be refunded.",
+      lookupUnavailable:
+        "We couldn't check the player name right now. Please double-check your ID before you pay — top-ups sent to a wrong ID can't be refunded.",
+      noNameCheck:
+        "We can't show the player name for this game, so please double-check your {label} before you pay. Top-ups sent to a wrong ID can't be refunded.",
       remembered: "Filled in from your last order.",
       forget: "Not you? Clear",
     },
     packages: {
       empty: "No packages are available for this game right now.",
-      bonus: "+{amount} bonus",
+      /** Package name is the total (e.g. "86 Diamonds"); the chip shows how it splits. */
+      bonusBreakdown: "{base} + {bonus} bonus",
+      bonusIncluded: "Includes {bonus} bonus",
       was: "Was",
     },
     badges: {
@@ -88,6 +95,10 @@ const messages = {
       select_package: "Please choose a package.",
       promo_changed:
         "Your promo code couldn't be applied (see the promo code step). Tap Pay again to continue without it.",
+      promo_first_order_only:
+        "This promo code is only for the first top-up of this game, and this player ID has already ordered. Tap Pay again to continue without it.",
+      promo_min_order:
+        "This promo code needs an order of at least {amount}. Choose a bigger package, or tap Pay again to continue without it.",
     },
     lookupErrors: {
       invalid_id: "This ID doesn't look right. Please check your ID and zone.",
@@ -107,6 +118,8 @@ const messages = {
       expired: "This promo code has expired.",
       used_up: "This promo code has been fully used.",
       min_order: "Your order is below the minimum for this code. Choose a bigger package.",
+      min_order_amount: "This code needs an order of at least {amount}. Choose a bigger package.",
+      first_order_only: "This code is only for the first top-up of this game, and this player ID has already ordered.",
       not_applicable: "This promo code can't be used for this game.",
       need_package: "Choose a package first — we'll apply the code automatically.",
       package_not_found: "Choose a package first.",
@@ -145,13 +158,19 @@ const messages = {
       check: "ពិនិត្យឈ្មោះអ្នកលេង",
       checking: "កំពុងពិនិត្យ…",
       playerFound: "អ្នកលេង៖",
-      formatOk: "ទម្រង់ ID ត្រឹមត្រូវ។",
+      formatOnly:
+        "ID នេះមានទម្រង់ត្រឹមត្រូវ ប៉ុន្តែយើងមិនអាចមើលឃើញឈ្មោះអ្នកលេងសម្រាប់ហ្គេមនេះទេ។ សូមពិនិត្យម្តងទៀត — ការបញ្ចូលទៅ ID ខុស មិនអាចសងប្រាក់វិញបានទេ។",
+      lookupUnavailable:
+        "យើងមិនអាចពិនិត្យឈ្មោះអ្នកលេងបាននៅពេលនេះទេ។ សូមពិនិត្យ ID របស់អ្នកម្តងទៀតមុនពេលបង់ប្រាក់ — ការបញ្ចូលទៅ ID ខុស មិនអាចសងប្រាក់វិញបានទេ។",
+      noNameCheck:
+        "យើងមិនអាចបង្ហាញឈ្មោះអ្នកលេងសម្រាប់ហ្គេមនេះបានទេ ដូច្នេះសូមពិនិត្យ {label} របស់អ្នកម្តងទៀតមុនពេលបង់ប្រាក់។ ការបញ្ចូលទៅ ID ខុស មិនអាចសងប្រាក់វិញបានទេ។",
       remembered: "បានបំពេញពីការបញ្ជាទិញលើកមុនរបស់អ្នក។",
       forget: "មិនមែនអ្នក? លុបចេញ",
     },
     packages: {
       empty: "បច្ចុប្បន្នមិនមានកញ្ចប់សម្រាប់ហ្គេមនេះទេ។",
-      bonus: "+{amount} បន្ថែម",
+      bonusBreakdown: "{base} + ថែម {bonus}",
+      bonusIncluded: "រួមទាំងថែម {bonus}",
       was: "តម្លៃដើម",
     },
     badges: {
@@ -204,6 +223,10 @@ const messages = {
       select_package: "សូមជ្រើសរើសកញ្ចប់មួយ។",
       promo_changed:
         "មិនអាចប្រើកូដបញ្ចុះតម្លៃរបស់អ្នកបានទេ (សូមមើលជំហានកូដបញ្ចុះតម្លៃ)។ ចុចបង់ប្រាក់ម្តងទៀត ដើម្បីបន្តដោយគ្មានកូដ។",
+      promo_first_order_only:
+        "កូដនេះសម្រាប់តែការបញ្ចូលលើកដំបូងនៃហ្គេមនេះប៉ុណ្ណោះ ហើយ ID អ្នកលេងនេះធ្លាប់បញ្ជាទិញរួចហើយ។ ចុចបង់ប្រាក់ម្តងទៀត ដើម្បីបន្តដោយគ្មានកូដ។",
+      promo_min_order:
+        "កូដនេះត្រូវការការបញ្ជាទិញយ៉ាងតិច {amount}។ សូមជ្រើសរើសកញ្ចប់ធំជាងនេះ ឬចុចបង់ប្រាក់ម្តងទៀត ដើម្បីបន្តដោយគ្មានកូដ។",
     },
     lookupErrors: {
       invalid_id: "ID នេះហាក់ដូចជាមិនត្រឹមត្រូវ។ សូមពិនិត្យ ID និង Zone របស់អ្នក។",
@@ -223,6 +246,8 @@ const messages = {
       expired: "កូដបញ្ចុះតម្លៃនេះផុតកំណត់ហើយ។",
       used_up: "កូដបញ្ចុះតម្លៃនេះត្រូវបានប្រើអស់ហើយ។",
       min_order: "ការបញ្ជាទិញរបស់អ្នកទាបជាងតម្លៃអប្បបរមាសម្រាប់កូដនេះ។ សូមជ្រើសរើសកញ្ចប់ធំជាងនេះ។",
+      min_order_amount: "កូដនេះត្រូវការការបញ្ជាទិញយ៉ាងតិច {amount}។ សូមជ្រើសរើសកញ្ចប់ធំជាងនេះ។",
+      first_order_only: "កូដនេះសម្រាប់តែការបញ្ចូលលើកដំបូងនៃហ្គេមនេះប៉ុណ្ណោះ ហើយ ID អ្នកលេងនេះធ្លាប់បញ្ជាទិញរួចហើយ។",
       not_applicable: "កូដបញ្ចុះតម្លៃនេះមិនអាចប្រើសម្រាប់ហ្គេមនេះបានទេ។",
       need_package: "សូមជ្រើសរើសកញ្ចប់ជាមុនសិន — យើងនឹងប្រើកូដនេះឱ្យដោយស្វ័យប្រវត្តិ។",
       package_not_found: "សូមជ្រើសរើសកញ្ចប់ជាមុនសិន។",

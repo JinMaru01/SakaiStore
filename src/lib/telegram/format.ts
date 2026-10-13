@@ -169,12 +169,34 @@ function adminContactLine(order: AdminCardOrder): string {
 }
 
 /**
+ * Warning for a payment confirmed after the order had left pending_payment.
+ * `paidFrom` is the status the order was paid from (recorded on the "paid"
+ * event); when it is unknown (older orders) we fall back to comparing paidAt
+ * with the QR expiry.
+ */
+export function latePaymentWarning(
+  order: Pick<Order, "paidAt" | "paymentExpiresAt">,
+  paidFrom: OrderStatus | null | undefined,
+): string | null {
+  if (paidFrom === "cancelled") {
+    return "⚠️ <b>Paid after the order was cancelled.</b> The customer may have placed another order for the same top-up — check for a duplicate before delivering, and refund one of them.";
+  }
+  if (paidFrom === "expired") {
+    return "⚠️ <b>Paid after the order had expired.</b> The customer may have been told the order expired — check the amount in your bank app, then let them know it's being delivered.";
+  }
+  if (paidFrom === undefined && order.paidAt && order.paymentExpiresAt && order.paidAt.getTime() > order.paymentExpiresAt.getTime()) {
+    return "⚠️ Paid after the QR expired — double-check the amount in your bank app.";
+  }
+  return null;
+}
+
+/**
  * The admin view of an order: what to top up (Player ID / Zone in <code> so
  * a tap copies them), what was paid, where the customer came from.
  */
 export function buildAdminOrderText(
   order: AdminCardOrder,
-  opts: { kind: AdminCardKind; reason?: string | null; footer?: string | null },
+  opts: { kind: AdminCardKind; reason?: string | null; footer?: string | null; paidFrom?: OrderStatus | null },
 ): string {
   const lines: string[] = [];
   if (opts.kind === "paid") lines.push("💰 <b>New paid order</b>");
@@ -207,9 +229,8 @@ export function buildAdminOrderText(
   if (order.paymentRef?.startsWith("MOCK-")) {
     lines.push("🧪 <b>TEST payment</b> (PAYMENT_MODE=mock) — no money was received.");
   }
-  if (order.paidAt && order.paymentExpiresAt && order.paidAt.getTime() > order.paymentExpiresAt.getTime()) {
-    lines.push("⚠️ Paid after the QR expired — double-check the amount in your bank app.");
-  }
+  const late = latePaymentWarning(order, opts.paidFrom);
+  if (late) lines.push(late);
   lines.push(adminContactLine(order));
   if (order.customerTelegramChatId) lines.push("🔔 Customer gets Telegram updates");
   if (opts.footer) lines.push("", opts.footer);
@@ -237,7 +258,15 @@ export function adminOrderKeyboard(
 
 export function buildAdminOrderCard(
   order: AdminCardOrder,
-  opts: { kind: AdminCardKind; siteUrl: string; actions: boolean; reason?: string | null; footer?: string | null },
+  opts: {
+    kind: AdminCardKind;
+    siteUrl: string;
+    actions: boolean;
+    reason?: string | null;
+    footer?: string | null;
+    /** Status the order was paid from (see latePaymentWarning). */
+    paidFrom?: OrderStatus | null;
+  },
 ): BotMessage {
   return {
     text: buildAdminOrderText(order, opts),
@@ -289,6 +318,55 @@ export function alreadyText(status: OrderStatus): string {
   return ["delivered", "failed", "refunded", "cancelled", "expired"].includes(status)
     ? `Already ${label}`
     : `Not possible — order is ${label}`;
+}
+
+// ───────────────────────────── admin: payment provider health ─────────────────────────────
+
+/** Bakong payment checks started failing, or work again (src/lib/payments/health.ts). */
+export type BakongHealthAlert =
+  | {
+      kind: "failing";
+      /** The provider error, e.g. "Bakong API token rejected (HTTP 401) …". */
+      message: string;
+      /** PaymentErrorCode: auth | not_configured | timeout | network | http | bad_response | api_error. */
+      code: string;
+      /** First failed check of this outage. */
+      since: Date;
+    }
+  | { kind: "recovered"; since: Date | null; at: Date };
+
+function bakongFixHint(code: string): string {
+  if (code === "auth") {
+    return "Renew the token at api-bakong.nbc.gov.kh, update <code>BAKONG_API_TOKEN</code> and redeploy/restart.";
+  }
+  if (code === "not_configured") return "Set <code>BAKONG_API_TOKEN</code> and redeploy/restart.";
+  return "Usually a Bakong outage or a network problem between the server and api-bakong.nbc.gov.kh. If it lasts, check the server can reach Bakong and that the token is still valid.";
+}
+
+/** Admin alert: payments can't be confirmed automatically / they can again. */
+export function buildBakongHealthAlert(alert: BakongHealthAlert, opts: { siteUrl: string }): BotMessage {
+  const settings = urlButton("Open settings in admin ↗", `${opts.siteUrl}/admin/settings`);
+  if (alert.kind === "recovered") {
+    const lines = ["✅ <b>Bakong payment checks work again</b>"];
+    if (alert.since) lines.push(`They were failing since ${formatShortDateTime(alert.since)}.`);
+    lines.push(
+      "",
+      "Orders that expired or were cancelled meanwhile are re-checked automatically (for up to 7 days); paid ones will alert here as usual.",
+    );
+    return { text: lines.join("\n"), replyMarkup: keyboard([[settings]]) };
+  }
+  return {
+    text: [
+      "🚨 <b>Bakong payment checks are failing</b>",
+      `<i>${esc(clip(alert.message, 300))}</i>`,
+      "",
+      `Since ${formatShortDateTime(alert.since)} paid orders cannot be confirmed automatically, so customers who paid may see their order expire.`,
+      bakongFixHint(alert.code),
+      "",
+      "Orders are re-checked automatically for up to 7 days once checks work again; older ones need <b>Mark paid</b> in the admin panel. This alert repeats hourly while checks keep failing.",
+    ].join("\n"),
+    replyMarkup: keyboard([[settings]]),
+  };
 }
 
 // ───────────────────────────── admin: queue, stats, help ─────────────────────────────

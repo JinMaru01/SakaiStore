@@ -10,7 +10,14 @@ import {
   sendAdminOrderAlert,
   syncAdminAlerts,
 } from "./alerts";
-import { adminActionFooter, buildCustomerUpdate, type CustomerContext, type CustomerUpdateKind } from "./format";
+import {
+  adminActionFooter,
+  buildBakongHealthAlert,
+  buildCustomerUpdate,
+  type BakongHealthAlert,
+  type CustomerContext,
+  type CustomerUpdateKind,
+} from "./format";
 
 /**
  * Telegram side of src/lib/notify: admin alerts and customer status pushes.
@@ -56,11 +63,15 @@ async function sendCustomerUpdate(order: Order, kind: CustomerUpdateKind): Promi
   await sendMessage(chatId, msg.text, { replyMarkup: msg.replyMarkup });
 }
 
-/** Payment confirmed: alert every admin chat, tell the customer if they linked Telegram. */
-export async function telegramNotifyOrderPaid(order: Order): Promise<void> {
+/**
+ * Payment confirmed: alert every admin chat, tell the customer if they linked
+ * Telegram. `previous` (the status it was paid from) flags late payments on
+ * expired/cancelled orders in the admin alert.
+ */
+export async function telegramNotifyOrderPaid(order: Order, previous?: OrderStatus | null): Promise<void> {
   if (!isTelegramConfigured()) return;
   await settle(`paid notification for ${order.code}`, [
-    sendAdminOrderAlert(order, "paid"),
+    sendAdminOrderAlert(order, "paid", null, { paidFrom: previous }),
     order.customerTelegramChatId ? sendCustomerUpdate(order, "paid") : null,
   ]);
 }
@@ -91,6 +102,7 @@ async function updateAdminChats(order: Order, previous: OrderStatus): Promise<vo
     refs.length
       ? syncAdminAlerts(order, {
           refs,
+          events,
           // A retry puts the order back in someone's hands: bring the buttons back.
           actions: retry,
           footer: adminActionFooter({
@@ -113,4 +125,16 @@ export async function telegramNotifyStatusChanged(order: Order, previous: OrderS
     kind && kind !== "paid" && order.customerTelegramChatId ? sendCustomerUpdate(order, kind) : null,
     updateAdminChats(order, previous),
   ]);
+}
+
+/** Bakong checks failing / recovered: message every admin chat (no-op without a bot or admin chats). */
+export async function telegramNotifyPaymentHealth(alert: BakongHealthAlert): Promise<void> {
+  if (!isTelegramConfigured()) return;
+  const chats = adminChatIds();
+  if (chats.length === 0) return;
+  const msg = buildBakongHealthAlert(alert, { siteUrl: siteUrl() });
+  await settle(
+    `payment health alert (${alert.kind})`,
+    chats.map((chatId) => sendMessage(chatId, msg.text, { replyMarkup: msg.replyMarkup })),
+  );
 }

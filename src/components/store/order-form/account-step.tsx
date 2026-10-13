@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleAlert, CircleCheck, CircleHelp, ChevronDown, UserRoundSearch } from "lucide-react";
+import { CircleAlert, CircleCheck, CircleHelp, ChevronDown, TriangleAlert, UserRoundSearch } from "lucide-react";
 import { Button, Input, Label, Select } from "@/components/ui";
 import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,13 @@ type Props = {
   /** Server-side field error code (invalid_id / invalid_zone) from the last submit. */
   serverField: { field: "playerId" | "zoneId"; error: string } | null;
   lookup: LookupState | null;
+  /**
+   * Whether this store can look up player names (PLAYER_LOOKUP_MODE ≠ none).
+   * Without it there is no "Check player name" button: a format check must
+   * never look like a confirmed account, so a standing warning asks the
+   * customer to double-check the ID instead.
+   */
+  nameLookup: boolean;
   remembered: boolean;
   onPlayerIdChange: (v: string) => void;
   onZoneChange: (v: string) => void;
@@ -34,6 +41,7 @@ export function AccountStep({
   zoneIssue,
   serverField,
   lookup,
+  nameLookup,
   remembered,
   onPlayerIdChange,
   onZoneChange,
@@ -62,6 +70,7 @@ export function AccountStep({
         : zoneIssue === "invalid"
           ? t("game.account.invalid", { label: zoneLabel })
           : null;
+  const idDescribedBy = [idError && "playerId-error", !nameLookup && "playerId-note"].filter(Boolean).join(" ");
 
   return (
     <Step n={1} id="step-account" title={t("game.steps.account")}>
@@ -83,7 +92,7 @@ export function AccountStep({
             maxLength={80}
             placeholder={t("game.account.idPlaceholder", { label: game.idLabel })}
             aria-invalid={idError ? true : undefined}
-            aria-describedby={idError ? "playerId-error" : undefined}
+            aria-describedby={idDescribedBy || undefined}
             aria-required="true"
             className="text-base"
           />
@@ -161,6 +170,16 @@ export function AccountStep({
         </p>
       )}
 
+      {!nameLookup && (
+        <p
+          id="playerId-note"
+          className="mt-3 flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/10 px-3.5 py-2.5 text-sm text-fg"
+        >
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+          <span>{t("game.account.noNameCheck", { label: game.idLabel })}</span>
+        </p>
+      )}
+
       {game.idHelp && (
         <details className="group mt-4 rounded-xl border border-border bg-surface-2/50">
           <summary className="flex cursor-pointer list-none items-center gap-2 px-3.5 py-2.5 text-sm font-medium text-fg [&::-webkit-details-marker]:hidden">
@@ -172,38 +191,45 @@ export function AccountStep({
         </details>
       )}
 
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onCheck}
-          loading={lookup?.status === "loading"}
-          className="sm:w-auto"
-        >
-          {lookup?.status !== "loading" && <UserRoundSearch className="h-4 w-4" aria-hidden="true" />}
-          {lookup?.status === "loading" ? t("game.account.checking") : t("game.account.check")}
-        </Button>
-        <div role="status" aria-live="polite" className="text-sm sm:min-h-5">
-          {lookup?.status === "ok" && (
-            <p className="flex items-center gap-1.5 text-success">
-              <CircleCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {lookup.playerName ? (
-                <span>
-                  {t("game.account.playerFound")} <strong className="font-semibold text-fg">{lookup.playerName}</strong>
-                </span>
+      {nameLookup && (
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onCheck}
+            loading={lookup?.status === "loading"}
+            className="sm:w-auto"
+          >
+            {lookup?.status !== "loading" && <UserRoundSearch className="h-4 w-4" aria-hidden="true" />}
+            {lookup?.status === "loading" ? t("game.account.checking") : t("game.account.check")}
+          </Button>
+          <div role="status" aria-live="polite" className="text-sm sm:min-h-5">
+            {lookup?.status === "ok" &&
+              (lookup.outcome === "found" && lookup.playerName ? (
+                <p className="flex items-center gap-1.5 text-success">
+                  <CircleCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>
+                    {t("game.account.playerFound")} <strong className="font-semibold text-fg">{lookup.playerName}</strong>
+                  </span>
+                </p>
               ) : (
-                <span>{t("game.account.formatOk")}</span>
-              )}
-            </p>
-          )}
-          {lookup?.status === "error" && (
-            <p className="flex items-center gap-1.5 text-danger">
-              <CircleAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
-              <span>{errorMessage(t, "game.lookupErrors", lookup.error)}</span>
-            </p>
-          )}
+                // Only the ID format was checked: a warning, never a green "confirmed" state.
+                <p className="flex items-start gap-1.5 text-fg">
+                  <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+                  <span>
+                    {t(lookup.outcome === "format_only" ? "game.account.formatOnly" : "game.account.lookupUnavailable")}
+                  </span>
+                </p>
+              ))}
+            {lookup?.status === "error" && (
+              <p className="flex items-center gap-1.5 text-danger">
+                <CircleAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>{errorMessage(t, "game.lookupErrors", lookup.error)}</span>
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </Step>
   );
 }

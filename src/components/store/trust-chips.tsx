@@ -2,14 +2,15 @@ import { BadgeDollarSign, Headphones, QrCode, Zap } from "lucide-react";
 import type { TranslateFn } from "@/i18n/translate";
 import { cn } from "@/lib/utils";
 
+// Claims must hold with manual fulfillment: "fast" (usually minutes), never "instant" or "cheapest".
 const CHIPS = [
-  { key: "instant", Icon: Zap, color: "text-warning" },
+  { key: "fast", Icon: Zap, color: "text-warning" },
   { key: "khqr", Icon: QrCode, color: "text-[#ff5a63]" },
   { key: "support", Icon: Headphones, color: "text-accent" },
-  { key: "cheapest", Icon: BadgeDollarSign, color: "text-success" },
+  { key: "fairPrices", Icon: BadgeDollarSign, color: "text-success" },
 ] as const;
 
-/** "Instant delivery · Pay with KHQR · Real human support · Cheapest prices" */
+/** "Fast delivery · Pay with KHQR · Real human support · Fair prices" */
 export function TrustChips({ t, className }: { t: TranslateFn; className?: string }) {
   return (
     <ul className={cn("grid grid-cols-2 gap-2 sm:flex sm:flex-wrap", className)}>

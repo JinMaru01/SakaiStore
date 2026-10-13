@@ -3,16 +3,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { getFollowPromo } from "@/components/social/follow-promo";
 import { ShareBar } from "@/components/social/share-bar";
 import { GameArt } from "@/components/store/game-tile";
 import { JsonLd } from "@/components/store/json-ld";
 import { OrderForm } from "@/components/store/order-form/order-form";
-import { toFormGame, toFormPackage } from "@/components/store/order-form/types";
+import { localizedText, toFormGame, toFormPackage } from "@/components/store/order-form/types";
 import { safeHex, withAlpha } from "@/components/store/game-art";
 import { paragraphs } from "@/components/store/rich-text";
 import { getT } from "@/i18n/server";
 import { getGameBySlug } from "@/lib/catalog";
-import { siteUrl } from "@/lib/env";
+import { env, siteUrl } from "@/lib/env";
 import { getSettings } from "@/lib/settings";
 import { formatUsd } from "@/lib/utils";
 
@@ -58,14 +59,19 @@ function promoFromQuery(v: string | string[] | undefined): string {
 
 export default async function GamePage(props: PageProps<"/games/[slug]">) {
   const [{ slug }, searchParams] = await Promise.all([props.params, props.searchParams]);
-  const [game, settings, { t }] = await Promise.all([loadGame(slug), getSettings(), getT()]);
+  const [game, settings, { t, locale }] = await Promise.all([loadGame(slug), getSettings(), getT()]);
   if (!game) notFound();
+  // Advertise the follower code only while it works for this game, with its conditions (e.g. min order).
+  const followPromo = await getFollowPromo(settings.marketing.followPromoCode, { gameId: game.id });
 
   const min = minPriceCents(game.packages);
   const base = siteUrl();
   const pageUrl = `${base}/games/${game.slug}`;
   const accent = safeHex(game.accentColor);
   const packages = game.packages.map(toFormPackage);
+  // Admin-written copy in the visitor's language (Khmer columns fall back to English).
+  const tagline = localizedText(locale, game.tagline, game.taglineKm);
+  const description = localizedText(locale, game.description, game.descriptionKm);
 
   return (
     <>
@@ -75,7 +81,7 @@ export default async function GamePage(props: PageProps<"/games/[slug]">) {
             "@context": "https://schema.org",
             "@type": "Product",
             name: t("game.meta.title", { game: game.name }),
-            description: game.description ?? game.tagline ?? undefined,
+            description: description ?? tagline ?? undefined,
             brand: { "@type": "Brand", name: settings.store.name },
             url: pageUrl,
             offers: {
@@ -135,9 +141,9 @@ export default async function GamePage(props: PageProps<"/games/[slug]">) {
                 {t("game.header.eyebrow", { currency: game.currencyName })}
               </p>
               <h1 className="mt-1 font-display text-2xl leading-tight font-bold sm:text-4xl">{game.name}</h1>
-              {(game.publisher || game.tagline) && (
+              {(game.publisher || tagline) && (
                 <p className="mt-1 text-sm text-muted sm:text-base">
-                  {[game.publisher, game.tagline].filter(Boolean).join(" · ")}
+                  {[game.publisher, tagline].filter(Boolean).join(" · ")}
                 </p>
               )}
             </div>
@@ -146,7 +152,7 @@ export default async function GamePage(props: PageProps<"/games/[slug]">) {
           <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted sm:text-sm">
             <li className="flex items-center gap-1.5">
               <Zap className="h-4 w-4 text-warning" aria-hidden="true" />
-              {t("home.trust.instant")}
+              {t("home.trust.fast")}
             </li>
             <li className="flex items-center gap-1.5">
               <QrCode className="h-4 w-4 text-[#ff5a63]" aria-hidden="true" />
@@ -162,10 +168,12 @@ export default async function GamePage(props: PageProps<"/games/[slug]">) {
 
       <div className="mx-auto max-w-6xl px-4 pt-6 pb-8 sm:px-6 sm:pt-8">
         <OrderForm
-          game={toFormGame(game)}
+          game={toFormGame(game, locale)}
           packages={packages}
           khrPerUsd={settings.store.khrPerUsd}
-          followCode={settings.marketing.followPromoCode.trim().toUpperCase()}
+          followCode={followPromo?.code ?? ""}
+          followTerms={followPromo?.terms ?? null}
+          nameLookup={env().PLAYER_LOOKUP_MODE !== "none"}
           initialPromo={promoFromQuery(searchParams.promo)}
         >
           <ShareBar
@@ -178,13 +186,13 @@ export default async function GamePage(props: PageProps<"/games/[slug]">) {
             }
             heading={t("social.share.gameHeading")}
           />
-          {game.description && (
+          {description && (
             <section aria-labelledby="about-game" className="rounded-[var(--radius-card)] border border-border bg-surface p-4 sm:p-6">
               <h2 id="about-game" className="font-display font-semibold">
                 {t("game.about.title", { game: game.name })}
               </h2>
               <div className="mt-2 space-y-2 text-sm leading-relaxed text-muted">
-                {paragraphs(game.description).map((p, i) => (
+                {paragraphs(description).map((p, i) => (
                   <p key={i}>{p}</p>
                 ))}
               </div>

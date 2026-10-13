@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
 import { settings as settingsTable } from "@/db/schema";
@@ -114,4 +114,90 @@ export async function updateSettings<K extends SettingsKey>(
       set: { value: parsed, updatedAt: sql`now()` },
     });
   return parsed;
+}
+
+// ───────────────────────────── internal sections ─────────────────────────────
+
+/**
+ * System-maintained state, stored in the same table but NOT part of
+ * `Settings`/getSettings() (never shown or edited in /admin/settings).
+ * Serverless instances share no memory, so cross-instance state such as
+ * alert rate limits lives here.
+ */
+
+const isoTime = z.string().max(40).nullable().default(null);
+
+/** Bakong payment-check health (written by src/lib/payments/health.ts). */
+export const bakongHealthStateSchema = z.object({
+  /** Last check Bakong answered (paid or unpaid). ISO time. */
+  lastOkAt: isoTime,
+  /** Last check that failed because of Bakong (token, network, HTTP…). */
+  lastErrorAt: isoTime,
+  lastErrorMessage: z.string().max(500).nullable().default(null),
+  /** Last "checks are failing" Telegram alert. */
+  lastAlertAt: isoTime,
+  /** First failure of the current run of failures (cleared by a successful check). */
+  failingSince: isoTime,
+  /** A failing alert went out and the "recovered" message is still owed. */
+  alertOpen: z.boolean().default(false),
+});
+
+export const healthSettingsSchema = z.object({
+  bakong: bakongHealthStateSchema.default(bakongHealthStateSchema.parse({})),
+});
+
+export type BakongHealthState = z.infer<typeof bakongHealthStateSchema>;
+export type HealthSettings = z.infer<typeof healthSettingsSchema>;
+
+const INTERNAL_SCHEMAS = { health: healthSettingsSchema } as const;
+type InternalKey = keyof typeof INTERNAL_SCHEMAS;
+type InternalValue<K extends InternalKey> = z.infer<(typeof INTERNAL_SCHEMAS)[K]>;
+
+/** Read an internal section (fresh, never cached; defaults when missing, invalid or on DB errors). */
+export async function getInternalSettings<K extends InternalKey>(key: K): Promise<InternalValue<K>> {
+  const schema = INTERNAL_SCHEMAS[key];
+  try {
+    const [row] = await db
+      .select({ value: settingsTable.value })
+      .from(settingsTable)
+      .where(eq(settingsTable.key, key))
+      .limit(1);
+    const parsed = schema.safeParse(row?.value ?? {});
+    if (parsed.success) return parsed.data as InternalValue<K>;
+  } catch (err) {
+    console.error(`[settings] failed to load ${key}, using defaults`, err);
+  }
+  return schema.parse({}) as InternalValue<K>;
+}
+
+/**
+ * Atomically read-modify-write an internal section: the row is locked for
+ * the duration, so concurrent writers (other requests, other instances) see
+ * each other's changes and exactly one of them wins a "claim" such as an
+ * alert slot. `mutate` gets a copy and returns the new value, or null to
+ * leave the row untouched. Throws on DB errors.
+ */
+export async function updateInternalSettings<K extends InternalKey>(
+  key: K,
+  mutate: (current: InternalValue<K>) => InternalValue<K> | null,
+): Promise<{ before: InternalValue<K>; after: InternalValue<K> }> {
+  const schema = INTERNAL_SCHEMAS[key];
+  return db.transaction(async (tx) => {
+    await tx
+      .insert(settingsTable)
+      .values({ key, value: schema.parse({}) })
+      .onConflictDoNothing({ target: settingsTable.key });
+    const [row] = await tx
+      .select({ value: settingsTable.value })
+      .from(settingsTable)
+      .where(eq(settingsTable.key, key))
+      .for("update");
+    const parsed = schema.safeParse(row?.value ?? {});
+    const before = (parsed.success ? parsed.data : schema.parse({})) as InternalValue<K>;
+    const next = mutate(structuredClone(before));
+    if (next === null) return { before, after: before };
+    const after = schema.parse(next) as InternalValue<K>;
+    await tx.update(settingsTable).set({ value: after, updatedAt: sql`now()` }).where(eq(settingsTable.key, key));
+    return { before, after };
+  });
 }

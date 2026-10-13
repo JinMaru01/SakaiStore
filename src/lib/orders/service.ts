@@ -16,12 +16,19 @@ import { CHANNELS, classifyChannel, type Attribution, type Channel } from "@/lib
 import { getGameBySlug, getPackageForGame, type GameWithPackages } from "@/lib/catalog";
 import { startFulfillment } from "@/lib/fulfillment";
 import { notifyOrderPaid, notifyOrderStatusChanged } from "@/lib/notify";
-import { checkPayment, createPayment, getPaymentMode, type CreatedPayment } from "@/lib/payments";
+import {
+  checkPayment,
+  createPayment,
+  getPaymentMode,
+  type CreatedPayment,
+  type PaymentCheckResult,
+} from "@/lib/payments";
+import { recordBakongCheck } from "@/lib/payments/health";
 import { lookupPlayer } from "@/lib/players/lookup";
 import { formatUsd } from "@/lib/utils";
 import { generateOrderCode, normalizeOrderCode } from "./code";
-import { evaluatePromo, normalizePromoCode, type PromoError } from "./pricing";
-import { findPromoByCode } from "./promos";
+import { evaluatePromo, normalizePromoCode, type PromoError, type PromoEvaluation } from "./pricing";
+import { evaluatePromoForOrder, findPromoByCode, lockPromoForOrder } from "./promos";
 import { allowedFrom, canTransition } from "./status";
 import { validatePlayer } from "./validation";
 
@@ -67,18 +74,29 @@ export type OrderErrorCode =
   | `promo_${PromoError}`
   | "payment_unavailable";
 
-/** Expected, customer-facing failure of createOrder. Routes map it to `{ error: code, field? }`. */
+/**
+ * Expected, customer-facing failure of createOrder. Routes map it to
+ * `{ error: code, field?, ...details }` (details: e.g. `minOrderCents` for promo_min_order).
+ */
 export class OrderError extends Error {
   readonly code: OrderErrorCode;
   readonly status: number;
   readonly field?: string;
-  constructor(code: OrderErrorCode, status = 400, field?: string) {
+  readonly details?: Record<string, unknown>;
+  constructor(code: OrderErrorCode, status = 400, field?: string, details?: Record<string, unknown>) {
     super(code);
     this.name = "OrderError";
     this.code = code;
     this.status = status;
     this.field = field;
+    this.details = details;
   }
+}
+
+/** promo_<error> on the promoCode field; min_order also says what the minimum is. */
+function promoOrderError(evaluation: Extract<PromoEvaluation, { ok: false }>): OrderError {
+  const details = evaluation.minOrderCents != null ? { minOrderCents: evaluation.minOrderCents } : undefined;
+  return new OrderError(`promo_${evaluation.error}`, 400, "promoCode", details);
 }
 
 export function isOrderError(err: unknown): err is OrderError {
@@ -87,12 +105,34 @@ export function isOrderError(err: unknown): err is OrderError {
 
 /** Poll throttle: at most one provider check per order per interval. */
 export const PAYMENT_CHECK_INTERVAL_MS = 4_000;
-/** The cron waits this long past paymentExpiresAt before expiring (polling expires right away after a final check). */
+/**
+ * An order stays pending_payment this long past paymentExpiresAt (the order
+ * page shows "QR expired — checking for your payment…"), so a payment made in
+ * the last seconds is confirmed instead of the order expiring. Then the next
+ * definitive "unpaid" check expires it (polling and cron alike).
+ */
 export const EXPIRY_GRACE_MS = 60_000;
-/** Expired orders are re-checked for late payments for this long… */
+/**
+ * …but no longer than this when no check gets an answer (Bakong outage): the
+ * order expires anyway and is re-checked later as a late payment.
+ */
+export const EXPIRY_HARD_CAP_MS = 10 * 60_000;
+/** Expired orders are re-checked for late payments for this long after their QR expired… */
 export const LATE_PAYMENT_WINDOW_MS = 24 * 60 * 60_000;
-/** …at most this often. */
+/** …cancelled orders for this long (their QR stays payable until it expires)… */
+export const CANCELLED_PAYMENT_WINDOW_MS = 60 * 60_000;
+/** …and orders whose final check never got an answer (provider outage) for this long. */
+export const UNCONFIRMED_PAYMENT_WINDOW_MS = 7 * 24 * 60 * 60_000;
+/**
+ * Late re-checks back off with age: every 10 min in the first hour after the
+ * QR expired, every 30 min until 6 h (or while the final check is still
+ * missing), then every 2 h.
+ */
 export const LATE_PAYMENT_RECHECK_MS = 10 * 60_000;
+export const LATE_PAYMENT_RECHECK_SLOW_MS = 30 * 60_000;
+export const LATE_PAYMENT_RECHECK_SLOWEST_MS = 2 * 60 * 60_000;
+/** Provider checks per cron run (pending orders first; see reconcilePendingPayments). */
+export const RECONCILE_LIMIT = 60;
 
 const MAX_CODE_ATTEMPTS = 5;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -172,6 +212,12 @@ async function resolvePlayerName(
  * Validate the request against the catalog, price it server-side, build the
  * KHQR and insert the order + "created" event atomically. Throws OrderError
  * for anything the customer can fix.
+ *
+ * A promo code is checked twice: once up front for a fast answer, and again
+ * inside the insert transaction with the promo row locked (FOR UPDATE). The
+ * second check counts the uses held by unexpired pending orders (maxUses) and
+ * the player's earlier orders (firstOrderOnly), so concurrent checkouts are
+ * serialized per code and cannot both take the last use.
  */
 export async function createOrder(input: CreateOrderInput, ctx: CreateOrderContext = {}): Promise<Order> {
   const now = ctx.now ?? new Date();
@@ -187,22 +233,19 @@ export async function createOrder(input: CreateOrderInput, ctx: CreateOrderConte
 
   // Pricing is always recomputed from the DB; nothing price-related comes from the client.
   const subtotalCents = pkg.priceCents;
-  let promo: PromoCode | null = null;
-  let discountCents = 0;
+  let promoId: number | null = null;
   if (normalizePromoCode(input.promoCode)) {
-    promo = await findPromoByCode(input.promoCode);
-    const evaluation = evaluatePromo(promo, { subtotalCents, gameId: game.id, now });
-    if (!evaluation.ok) throw new OrderError(`promo_${evaluation.error}`, 400, "promoCode");
-    discountCents = evaluation.discountCents;
+    const promo = await findPromoByCode(input.promoCode);
+    const quick = evaluatePromo(promo, { subtotalCents, gameId: game.id, now });
+    if (!quick.ok) throw promoOrderError(quick);
+    promoId = promo!.id;
   }
-  const totalCents = subtotalCents - discountCents;
 
-  // Channel: last non-direct-touch attribution; a channel promo code (e.g. TIKTOK5) explains "direct" visits.
   const attribution = ctx.attribution ?? null;
-  let channel: Channel = classifyChannel(attribution);
-  if (channel === "direct" && promo && isChannel(promo.channel)) channel = promo.channel;
-
-  const values: Omit<NewOrder, "code" | "khqr" | "khqrMd5" | "paymentExpiresAt"> = {
+  const base: Omit<
+    NewOrder,
+    "code" | "khqr" | "khqrMd5" | "paymentExpiresAt" | "discountCents" | "totalCents" | "promoCodeId" | "promoCode" | "channel"
+  > = {
     status: "pending_payment",
     gameId: game.id,
     packageId: pkg.id,
@@ -213,16 +256,11 @@ export async function createOrder(input: CreateOrderInput, ctx: CreateOrderConte
     zoneId: player.zoneId,
     playerName,
     unitPriceCents: subtotalCents,
-    discountCents,
-    totalCents,
     currency: "USD",
-    promoCodeId: promo?.id ?? null,
-    promoCode: promo?.code ?? null,
     paymentMethod: "khqr",
     contactPhone: clean(input.contactPhone, 32),
     contactTelegram: clean(input.contactTelegram, 64)?.replace(/^@/, "") || null,
     locale: ctx.locale === "km" ? "km" : "en",
-    channel,
     utmSource: clean(attribution?.utmSource, 120),
     utmMedium: clean(attribution?.utmMedium, 120),
     utmCampaign: clean(attribution?.utmCampaign, 120),
@@ -237,20 +275,45 @@ export async function createOrder(input: CreateOrderInput, ctx: CreateOrderConte
 
   for (let attempt = 1; ; attempt++) {
     const code = generateOrderCode();
-    let payment: CreatedPayment;
-    try {
-      payment = createPayment({ code, totalCents, now });
-    } catch (err) {
-      console.error("[orders] cannot build KHQR; check BAKONG_* settings", err);
-      throw new OrderError("payment_unavailable", 503);
-    }
     try {
       return await db.transaction(async (tx) => {
+        // Authoritative promo check: row locked until commit, reservations counted.
+        let promo: PromoCode | null = null;
+        let discountCents = 0;
+        if (promoId != null) {
+          promo = await lockPromoForOrder(tx, promoId);
+          const evaluation = await evaluatePromoForOrder(
+            promo,
+            { subtotalCents, gameId: game.id, now, player: { playerId: player.playerId, zoneId: player.zoneId } },
+            tx,
+          );
+          if (!evaluation.ok) throw promoOrderError(evaluation);
+          discountCents = evaluation.discountCents;
+        }
+        const totalCents = subtotalCents - discountCents;
+
+        let payment: CreatedPayment;
+        try {
+          payment = createPayment({ code, totalCents, now });
+        } catch (err) {
+          console.error("[orders] cannot build KHQR; check BAKONG_* settings", err);
+          throw new OrderError("payment_unavailable", 503);
+        }
+
+        // Channel: last non-direct-touch attribution; a channel promo code (e.g. TIKTOK5) explains "direct" visits.
+        let channel: Channel = classifyChannel(attribution);
+        if (channel === "direct" && promo && isChannel(promo.channel)) channel = promo.channel;
+
         const [order] = await tx
           .insert(orders)
           .values({
-            ...values,
+            ...base,
             code,
+            discountCents,
+            totalCents,
+            promoCodeId: promo?.id ?? null,
+            promoCode: promo?.code ?? null,
+            channel,
             khqr: payment.khqr,
             khqrMd5: payment.md5,
             paymentExpiresAt: payment.expiresAt,

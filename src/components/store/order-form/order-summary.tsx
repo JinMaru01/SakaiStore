@@ -2,6 +2,7 @@
 
 import { CircleAlert, Lock, QrCode } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui";
 import { useT } from "@/i18n/client";
 import { cn, formatKhr, formatUsd } from "@/lib/utils";
@@ -11,6 +12,13 @@ import type { FormGame, FormPackage } from "./types";
 
 /** id of the <form> in order-form.tsx; the Pay buttons sit outside it. */
 export const ORDER_FORM_ID = "order-form";
+
+/**
+ * CSS variable with the mobile pay bar's real height (it grows with an error
+ * or a wrapped Khmer line). The floating chat bubble and the footer use it to
+ * stay clear of the bar.
+ */
+export const BOTTOM_BAR_HEIGHT_VAR = "--bottom-bar-h";
 
 export type SummaryProps = {
   game: FormGame;
@@ -93,21 +101,33 @@ export function SummaryCard(p: SummaryProps) {
         <Lock className="h-3.5 w-3.5" aria-hidden="true" />
         {t("game.summary.secure")}
       </p>
-      <p className="mt-2 text-center text-xs text-muted">
-        {richText(t("game.summary.agree"), {
-          terms: (c) => (
-            <Link href="/terms" className="underline underline-offset-2 hover:text-fg">
-              {c}
-            </Link>
-          ),
-          privacy: (c) => (
-            <Link href="/privacy" className="underline underline-offset-2 hover:text-fg">
-              {c}
-            </Link>
-          ),
-        })}
-      </p>
+      <AgreeLine className="mt-2 text-xs" />
     </aside>
+  );
+}
+
+/**
+ * "By paying you agree to our Terms and Privacy Policy" with links. Shown next
+ * to every Pay button (desktop card and the phone bar), because the terms carry
+ * the wrong-ID / no-refund rules customers accept at checkout.
+ */
+export function AgreeLine({ className }: { className?: string }) {
+  const t = useT();
+  return (
+    <p data-agree className={cn("text-center text-muted", className)}>
+      {richText(t("game.summary.agree"), {
+        terms: (c) => (
+          <Link href="/terms" className="underline underline-offset-2 hover:text-fg">
+            {c}
+          </Link>
+        ),
+        privacy: (c) => (
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-fg">
+            {c}
+          </Link>
+        ),
+      })}
+    </p>
   );
 }
 
@@ -134,8 +154,10 @@ export function MobileBar(p: SummaryProps) {
   const t = useT();
   const subtotal = p.pkg?.priceCents ?? 0;
   const total = Math.max(0, subtotal - p.discountCents);
+  const barRef = useBarHeightVar();
   return (
     <div
+      ref={barRef}
       data-bottom-bar
       className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-12px_30px_-12px_rgb(0_0_0/0.7)] backdrop-blur-xl lg:hidden"
     >
@@ -156,6 +178,26 @@ export function MobileBar(p: SummaryProps) {
         </div>
         <PayButton submitting={p.submitting} className="w-auto shrink-0 px-5" />
       </div>
+      <AgreeLine className="mx-auto mt-1.5 max-w-xl text-[11px]" />
     </div>
   );
+}
+
+/** Publish the bar's rendered height as BOTTOM_BAR_HEIGHT_VAR on <html> while it is mounted. */
+function useBarHeightVar() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const root = document.documentElement;
+    const update = () => root.style.setProperty(BOTTOM_BAR_HEIGHT_VAR, `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    update();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    observer?.observe(el);
+    return () => {
+      observer?.disconnect();
+      root.style.removeProperty(BOTTOM_BAR_HEIGHT_VAR);
+    };
+  }, []);
+  return ref;
 }

@@ -7,10 +7,12 @@ import { buttonClasses } from "@/components/ui";
 import { FaqList, faqEntries } from "@/components/store/faq-list";
 import { GameArt, GameTile, type TileGame } from "@/components/store/game-tile";
 import { HowItWorks } from "@/components/store/how-it-works";
+import { localizedText } from "@/components/store/order-form/types";
 import { JsonLd } from "@/components/store/json-ld";
 import { KhqrBadge, PaymentChips } from "@/components/store/payment-methods";
 import { SectionHeading } from "@/components/store/section-heading";
 import { TrustChips } from "@/components/store/trust-chips";
+import type { Locale } from "@/i18n/config";
 import { getT } from "@/i18n/server";
 import { listGames, type GameWithMinPrice } from "@/lib/catalog";
 import { siteUrl } from "@/lib/env";
@@ -41,25 +43,25 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const toTile = (g: GameWithMinPrice): TileGame => ({
+const toTile = (g: GameWithMinPrice, locale: Locale): TileGame => ({
   slug: g.slug,
   name: g.name,
   currencyName: g.currencyName,
   accentColor: g.accentColor,
   imageUrl: g.imageUrl,
   publisher: g.publisher,
-  tagline: g.tagline,
+  tagline: localizedText(locale, g.tagline, g.taglineKm),
   minPriceCents: g.minPriceCents,
 });
 
 const CONTAINER = "mx-auto w-full max-w-6xl px-4 sm:px-6";
 
 export default async function HomePage() {
-  const [{ t }, settings, games] = await Promise.all([getT(), getSettings(), listGames()]);
+  const [{ t, locale }, settings, games] = await Promise.all([getT(), getSettings(), listGames()]);
   // Games without active packages cannot be ordered; keep them off the storefront.
   const orderable = games.filter((g) => g.packageCount > 0);
-  const tiles = orderable.map(toTile);
-  const featured = orderable.filter((g) => g.featured).map(toTile);
+  const tiles = orderable.map((g) => toTile(g, locale));
+  const featured = orderable.filter((g) => g.featured).map((g) => toTile(g, locale));
   const showcase = (featured.length >= 3 ? featured : tiles).slice(0, 3);
   const fromLabel = t("common.fromPrice");
   const base = siteUrl();

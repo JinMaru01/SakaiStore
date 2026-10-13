@@ -61,13 +61,19 @@ export function gameInitials(name: string): string {
     .join("");
 }
 
+/** A same-origin /public path ("/games/ml.png"), not a protocol-relative "//host" URL. */
+export function isLocalImageUrl(url: string | null | undefined): url is string {
+  return !!url && url.startsWith("/") && !url.startsWith("//");
+}
+
 /**
- * next/image can optimize https URLs (next.config remotePatterns) and local
- * /public paths. Anything else falls back to the generated tile.
+ * Game art we can render: local /public paths (optimized by next/image) and
+ * https URLs (rendered unoptimized, loaded straight by the browser, so no
+ * remotePatterns are needed). Anything else falls back to the generated tile.
  */
 export function isRenderableImageUrl(url: string | null | undefined): url is string {
   if (!url) return false;
-  if (url.startsWith("/") && !url.startsWith("//")) return true;
+  if (isLocalImageUrl(url)) return true;
   try {
     return new URL(url).protocol === "https:";
   } catch {

@@ -1,7 +1,7 @@
-import { MessageCircleQuestion } from "lucide-react";
+import { MessageCircleQuestion, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import { MessengerIcon, TelegramIcon } from "@/components/icons/brand";
-import { supportChatLinks } from "@/components/social/social-config";
+import { hasSupportContact, supportChatLinks } from "@/components/social/social-config";
 import { FaqHashOpener } from "@/components/store/faq-hash-opener";
 import { FaqList, faqEntries } from "@/components/store/faq-list";
 import { JsonLd } from "@/components/store/json-ld";
@@ -44,7 +44,7 @@ export default async function FaqPage() {
       <FaqList items={items} className="mt-8" />
       <FaqHashOpener />
 
-      {(chat.telegram || chat.messenger) && (
+      {hasSupportContact(chat) && (
         <section className="mt-10 rounded-[var(--radius-card)] border border-border bg-surface p-5 sm:p-6">
           <h2 className="font-display text-lg font-semibold">{t("pages.faq.stillTitle")}</h2>
           <p className="mt-1 text-muted">{t("pages.faq.stillBody")}</p>
@@ -69,6 +69,16 @@ export default async function FaqPage() {
               >
                 <MessengerIcon className="h-4 w-4" />
                 {t("social.chat.messenger")}
+              </a>
+            )}
+            {/* No chat app configured: the support phone is the fallback. */}
+            {!chat.telegram && !chat.messenger && chat.phone && (
+              <a
+                href={chat.phone.href}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 font-semibold text-primary-fg hover:brightness-110"
+              >
+                <Phone className="h-4 w-4" aria-hidden="true" />
+                {t("social.chat.call", { phone: chat.phone.label })}
               </a>
             )}
           </div>

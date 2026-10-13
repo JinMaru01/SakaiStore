@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, X } from "lucide-react";
+import { MessageCircle, Phone, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { MessengerIcon, TelegramIcon } from "@/components/icons/brand";
 import { useT } from "@/i18n/client";
@@ -9,17 +9,18 @@ import type { ChatLinks } from "./social-config";
 
 /*
  * Bottom-right chat bubble. On pages with a fixed mobile bottom bar (the order
- * form marks it with data-bottom-bar) it moves up so it never covers the
- * "Pay" button.
+ * form marks it with data-bottom-bar) it sits just above the bar, using the
+ * bar's measured height (--bottom-bar-h, set by MobileBar), so it never covers
+ * the "Pay" button or a checkout error, however tall the bar grows.
  */
 const POSITION =
   "fixed right-4 z-40 bottom-[max(1rem,env(safe-area-inset-bottom))] " +
-  "max-lg:[body:has([data-bottom-bar])_&]:bottom-28";
+  "max-lg:[body:has([data-bottom-bar])_&]:bottom-[calc(var(--bottom-bar-h,7rem)_+_0.75rem)]";
 
 const OPTION =
   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-fg transition-colors hover:bg-surface-2";
 
-export function FloatingChat({ messenger, telegram }: ChatLinks) {
+export function FloatingChat({ messenger, telegram, phone }: ChatLinks) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -39,11 +40,26 @@ export function FloatingChat({ messenger, telegram }: ChatLinks) {
     };
   }, [open]);
 
-  if (!messenger && !telegram) return null;
-
   const bubble =
     "grid h-14 w-14 place-items-center rounded-full bg-brand-gradient text-white shadow-[0_10px_30px_-8px_rgb(124_92_255/0.8)] " +
     "transition-transform hover:scale-105 active:scale-95";
+
+  if (!messenger && !telegram) {
+    // No chat app configured: the support phone is the only way to reach a person.
+    if (!phone) return null;
+    return (
+      <div className={POSITION}>
+        <a
+          href={phone.href}
+          className={bubble}
+          aria-label={t("social.chat.call", { phone: phone.label })}
+          onClick={() => track("Contact")}
+        >
+          <Phone className="h-6 w-6" aria-hidden="true" />
+        </a>
+      </div>
+    );
+  }
 
   // Only one channel configured: the bubble links straight to it.
   if (!messenger || !telegram) {

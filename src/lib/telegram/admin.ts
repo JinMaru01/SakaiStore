@@ -5,7 +5,7 @@ import { addDays, startOfStoreDay } from "@/lib/admin/time";
 import { siteUrl } from "@/lib/env";
 import { getOrderByCode, getOrderById, markOrderDelivered, markOrderFailed } from "@/lib/orders/service";
 import { answerCallbackQuery, sendMessage } from "./api";
-import { alertRefsFrom, findRef, latestStatusEvent, loadOrderEvents, syncAdminAlerts } from "./alerts";
+import { alertRefsFrom, findRef, latestStatusEvent, loadOrderEvents, paidFromEvents, syncAdminAlerts } from "./alerts";
 import type { OrderCallback } from "./callbacks";
 import {
   adminActionFooter,
@@ -56,7 +56,13 @@ export async function handleOrderCommand(chatId: number, args: string): Promise<
     await reply(chatId, `Order <code>${escapeHtml(code.slice(0, 32))}</code> not found.`);
     return;
   }
-  await reply(chatId, buildAdminOrderCard(order, { kind: "details", siteUrl: siteUrl(), actions: true }));
+  await reply(chatId, await detailsCard(order));
+}
+
+/** The /order card, with the late-payment warning when it was paid after expiring/cancelling. */
+async function detailsCard(order: Order) {
+  const paidFrom = order.paidAt ? paidFromEvents(await loadOrderEvents(order.id)) : undefined;
+  return buildAdminOrderCard(order, { kind: "details", siteUrl: siteUrl(), actions: true, paidFrom });
 }
 
 export async function handleStatsCommand(chatId: number): Promise<void> {
@@ -88,6 +94,7 @@ async function refreshTappedCard(order: Order, tapped: { chatId: string; message
   const event = actionable ? null : latestStatusEvent(events, order.status);
   await syncAdminAlerts(order, {
     refs: [ref ?? { ...tapped, kind: "details", reason: null }],
+    events,
     actions: actionable,
     footer: event ? adminActionFooter({ status: order.status, at: event.createdAt, actor: event.actor }) : null,
   });
@@ -107,10 +114,7 @@ export async function handleOrderCallback(cq: IncomingCallbackQuery, cb: OrderCa
   const chatId = cq.message?.chat.id ?? cq.from.id;
 
   if (cb.action === "view") {
-    await Promise.all([
-      answerCallbackQuery(cq.id),
-      reply(chatId, buildAdminOrderCard(order, { kind: "details", siteUrl: siteUrl(), actions: true })),
-    ]);
+    await Promise.all([answerCallbackQuery(cq.id), reply(chatId, await detailsCard(order))]);
     return;
   }
 

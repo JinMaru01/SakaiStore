@@ -2,6 +2,7 @@
 
 import { CircleCheck, Crown, Flame, Gem, Percent, Sparkles } from "lucide-react";
 import { useT } from "@/i18n/client";
+import type { TranslateFn } from "@/i18n/translate";
 import { cn, formatKhr, formatNumber, formatUsd } from "@/lib/utils";
 import { Step } from "./step";
 import type { FormPackage } from "./types";
@@ -30,6 +31,19 @@ function PackageBadge({ badge }: { badge: string }) {
       {label}
     </span>
   );
+}
+
+/**
+ * Package names already state the total the customer gets ("86 Diamonds" =
+ * 78 + 8 bonus), so the chip explains the split instead of reading as extra
+ * on top ("+8 bonus" made customers expect 94). Names are admin-authored and
+ * may not equal amount + bonus, so never compute a total here.
+ */
+export function bonusLabel(t: TranslateFn, p: Pick<FormPackage, "amount" | "bonus">): string {
+  const bonus = formatNumber(p.bonus);
+  return p.amount > 0
+    ? t("game.packages.bonusBreakdown", { base: formatNumber(p.amount), bonus })
+    : t("game.packages.bonusIncluded", { bonus });
 }
 
 type Props = {
@@ -92,7 +106,7 @@ export function PackageGrid({ packages, selectedId, khrPerUsd, error, onSelect }
                 </span>
                 {p.bonus > 0 && (
                   <span className="mt-1.5 inline-flex w-fit items-center rounded-md bg-success/15 px-1.5 py-0.5 text-[11px] font-semibold text-success">
-                    {t("game.packages.bonus", { amount: formatNumber(p.bonus) })}
+                    {bonusLabel(t, p)}
                   </span>
                 )}
                 <span className="mt-auto pt-2.5">

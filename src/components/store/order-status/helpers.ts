@@ -12,10 +12,35 @@ export const POLL_INTERVAL_MS = 4_000;
 /** A failed order may be retried or delivered by an admin; check occasionally. */
 export const SLOW_POLL_INTERVAL_MS = 20_000;
 
-/** Milliseconds until the next poll, or null to stop polling. */
-export function pollIntervalFor(status: OrderStatus): number | null {
+/**
+ * An expired (or cancelled) order can still turn paid: a payment made in the
+ * last seconds is confirmed late by the bank or the reconcile cron, or the
+ * owner confirms it by hand. Keep checking slowly so the open page picks up
+ * expired → paid (and fires the Purchase pixel)...
+ */
+export const EXPIRED_POLL_INTERVAL_MS = 30_000;
+/** ...for this long after the QR expired, so a forgotten tab does not poll forever. */
+export const EXPIRED_POLL_WINDOW_MS = 30 * 60_000;
+
+/** Statuses that may still turn paid after the QR window (late payment). */
+const LATE_PAYMENT_STATUSES: readonly OrderStatus[] = ["expired", "cancelled"];
+
+/**
+ * Milliseconds until the next poll, or null to stop polling. Expired and
+ * cancelled orders are polled until `paymentExpiresAt` + EXPIRED_POLL_WINDOW_MS
+ * (`now` is required for them; without it, or without an expiry, they stop).
+ */
+export function pollIntervalFor(
+  status: OrderStatus,
+  paymentExpiresAt?: string | null,
+  now?: number | null,
+): number | null {
   if (ACTIVE_STATUSES.includes(status)) return POLL_INTERVAL_MS;
   if (status === "failed") return SLOW_POLL_INTERVAL_MS;
+  if (LATE_PAYMENT_STATUSES.includes(status) && now != null) {
+    const left = remainingMs(paymentExpiresAt, now);
+    if (left != null && left > -EXPIRED_POLL_WINDOW_MS) return EXPIRED_POLL_INTERVAL_MS;
+  }
   return null;
 }
 
