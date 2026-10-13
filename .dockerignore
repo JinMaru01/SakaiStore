@@ -1,0 +1,28 @@
+# Keep the build context small and secrets out of image layers.
+.git
+.github
+node_modules
+.next
+out
+build
+coverage
+test-results
+playwright-report
+blob-report
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+
+# Never bake environment files into an image: pass them at run time
+# (docker compose env_file / -e / your host's secret store).
+.env
+.env.*
+!.env.example
+
+# Local tooling
+.vscode
+.idea
+.DS_Store
+.claude
+Dockerfile
+docker-compose*.yml

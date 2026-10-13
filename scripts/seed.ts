@@ -8,8 +8,10 @@ import { games, packages, promoCodes, settings } from "../src/db/schema";
 /**
  * Seed the catalog with popular games in Cambodia.
  *
- *   npm run db:seed            # insert missing games/packages/promos/settings (safe to re-run)
- *   npm run db:seed -- --reset # wipe catalog (games, packages, promo codes) and re-seed
+ *   npm run db:seed               # insert missing games/packages/promos/settings (safe to re-run)
+ *   npm run db:seed -- --if-empty # only seed a brand-new database (used by Docker on every start,
+ *                                 # so games the owner deleted in /admin are not re-created)
+ *   npm run db:seed -- --reset    # wipe catalog (games, packages, promo codes) and re-seed
  *
  * ⚠️ PRICES ARE SAMPLE VALUES. Set your real prices in /admin/games before launch.
  * Existing games keep their packages; packages are only inserted for games
@@ -364,6 +366,14 @@ async function main() {
   });
   const db = drizzle(pool, { schema });
   const reset = process.argv.includes("--reset");
+  if (!reset && process.argv.includes("--if-empty")) {
+    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(games);
+    if (count > 0) {
+      console.log(`✓ catalog already has ${count} game(s); skipping seed (--if-empty)`);
+      await pool.end();
+      return;
+    }
+  }
   console.log(reset ? "Resetting and seeding catalog…" : "Seeding catalog…");
   await seed(db, { reset });
   await pool.end();

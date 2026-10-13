@@ -15,4 +15,6 @@ Key rules:
 - Cache Components is off; `params`/`searchParams`/`cookies()` are async (Next 16).
 
 Local dev: `cp .env.example .env`, start Postgres (`docker compose up -d db`), `npm run db:setup`, `npm run dev`.
-Checks: `npm run typecheck && npm run lint && npm test && npm run build`.
+Checks: `npm run typecheck && npm run lint && npm test && npm run build`, then `npm run test:e2e`
+(Playwright against `next start` on :3100; set `PLAYWRIGHT_CHROMIUM_PATH` to use a preinstalled Chromium).
+Deployment (Vercel, Docker/VPS, Bakong go-live, cron, env reference): `docs/DEPLOYMENT.md`.

@@ -1,0 +1,29 @@
+# Optional payment-reconcile cron for hosts without a frequent scheduler
+# (e.g. Vercel Hobby, which only allows daily cron jobs). It calls
+# GET /api/cron/reconcile so KHQR payments are confirmed even when the
+# customer closed the order page.
+#
+# Enable: Settings → Secrets and variables → Actions
+#   Variables: SITE_URL = https://your-domain.com
+#   Secrets:   CRON_SECRET = the same value as on the server
+# GitHub may delay scheduled runs by several minutes and pauses them in repos
+# with no activity for 60 days — see docs/DEPLOYMENT.md for alternatives.
+name: Reconcile payments
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  reconcile:
+    if: ${{ vars.SITE_URL != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Call /api/cron/reconcile
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -fsS --max-time 90 -H "Authorization: Bearer ${CRON_SECRET}" "${SITE_URL%/}/api/cron/reconcile"

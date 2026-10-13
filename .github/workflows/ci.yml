@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Typecheck, lint, test, build, e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: sakai
+          POSTGRES_PASSWORD: sakai
+          POSTGRES_DB: sakaistore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sakai -d sakaistore"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # App database used by the e2e run (npm run start); vitest uses its own DB below.
+      DATABASE_URL: postgresql://sakai:sakai@localhost:5432/sakaistore
+      TEST_DATABASE_URL: postgresql://sakai:sakai@localhost:5432/sakaistore_test
+      NEXT_PUBLIC_SITE_URL: http://localhost:3100
+      AUTH_SECRET: ci-only-secret-not-for-production-0123456789
+      ADMIN_PASSWORD: ci-admin-password
+      E2E_ADMIN_PASSWORD: ci-admin-password
+      PAYMENT_MODE: mock
+      PLAYER_LOOKUP_MODE: mock
+      FULFILLMENT_MODE: manual
+      NEXT_TELEMETRY_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create the test database
+        run: PGPASSWORD=sakai psql -h localhost -U sakai -d sakaistore -c "CREATE DATABASE sakaistore_test"
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit + integration tests (vitest)
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: Migrate + seed the e2e database
+        run: npm run db:setup
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests (Playwright, mobile + desktop)
+        run: npm run test:e2e
+
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7
